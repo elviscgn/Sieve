@@ -3,32 +3,33 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  LayoutDashboard,
-  Briefcase,
-  Users,
-  ListChecks,
-  BarChart3,
-  Settings,
-  HelpCircle,
-  Key,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
-} from "lucide-react";
+  faChartPie,
+  faBriefcase,
+  faUsers,
+  faListCheck,
+  faChartLine,
+  faSlidersH,
+  faKey,
+  faCircleQuestion,
+  faChevronLeft,
+  faChevronRight,
+  faFileContract,
+} from "@fortawesome/free-solid-svg-icons";
 
 const mainNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/jobs", label: "Jobs", icon: Briefcase, badge: "3" },
-  { href: "/candidates", label: "Candidates", icon: Users },
-  { href: "/sessions", label: "Sessions", icon: ListChecks, badge: "5" },
-  { href: "/intelligence", label: "Intelligence", icon: BarChart3 },
+  { href: "/dashboard", label: "Dashboard", icon: faChartPie },
+  { href: "/jobs", label: "Jobs", icon: faBriefcase, badge: "3" },
+  { href: "/candidates", label: "Candidates", icon: faUsers },
+  { href: "/sessions", label: "Sessions", icon: faListCheck, badge: "5" },
+  { href: "/intelligence", label: "Intelligence", icon: faChartLine },
 ];
 
 const settingsNavItems = [
-  { href: "/preferences", label: "Preferences", icon: Settings },
-  { href: "/api-config", label: "API Config", icon: Key },
-  { href: "/help", label: "Help & Docs", icon: HelpCircle },
+  { href: "/preferences", label: "Preferences", icon: faSlidersH },
+  { href: "/api-config", label: "API Config", icon: faKey },
+  { href: "/help", label: "Help & Docs", icon: faCircleQuestion },
 ];
 
 export default function Sidebar() {
@@ -37,7 +38,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile overlay */}
       <div className="sidebar-overlay" id="sidebarOverlay" />
 
       <aside
@@ -45,22 +45,16 @@ export default function Sidebar() {
           collapsed ? "w-16" : "w-60"
         }`}
       >
-        {/* Collapse toggle button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="absolute top-[22px] -right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-[#e2e8f0] text-[#2563eb] cursor-pointer z-25 transition-all text-xs"
         >
-          {collapsed ? (
-            <ChevronRight className="w-3.5 h-3.5" />
-          ) : (
-            <ChevronLeft className="w-3.5 h-3.5" />
-          )}
+          <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} />
         </button>
 
-        {/* Logo */}
         <div className="px-4 pb-5 pt-5 flex items-center gap-2.5 border-b border-white/15 mb-2">
           <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-white text-base border border-white/25">
-            <Briefcase className="w-5 h-5" />
+            <FontAwesomeIcon icon={faFileContract} />
           </div>
           {!collapsed && (
             <div>
@@ -74,7 +68,6 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Main Navigation */}
         <div className="px-2.5 py-0.5">
           {!collapsed && (
             <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">
@@ -94,7 +87,7 @@ export default function Sidebar() {
                     : "text-white hover:bg-white/15"
                 } ${collapsed ? "justify-center" : ""}`}
               >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <FontAwesomeIcon icon={item.icon} className="w-4 h-4 flex-shrink-0" />
                 {!collapsed && (
                   <>
                     <span className="flex-1">{item.label}</span>
@@ -110,7 +103,6 @@ export default function Sidebar() {
           })}
         </div>
 
-        {/* Settings Navigation */}
         <div className="px-2.5 py-0.5 mt-1">
           {!collapsed && (
             <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">
@@ -130,14 +122,13 @@ export default function Sidebar() {
                     : "text-white hover:bg-white/15"
                 } ${collapsed ? "justify-center" : ""}`}
               >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <FontAwesomeIcon icon={item.icon} className="w-4 h-4 flex-shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
         </div>
 
-        {/* Team Card */}
         <div className="mt-auto mx-2.5 mb-4">
           <div className="bg-white/15 rounded-xl p-3 border border-white/18 flex items-center gap-2.5 cursor-pointer hover:bg-white/20 transition-all">
             <div className="w-[34px] h-[34px] rounded-lg bg-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
@@ -149,7 +140,7 @@ export default function Sidebar() {
                   <h4 className="font-bold text-[13px] text-white">WeThinkCode_</h4>
                   <p className="text-[10px] text-white/75">Coding academy</p>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-white/70" />
+                <FontAwesomeIcon icon={faChevronRight} className="w-3.5 h-3.5 text-white/70" />
               </>
             )}
           </div>
