@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Work_Sans } from "next/font/google";
 import "./globals.css";
-// import Sidebar from "@/components/layout/Sidebar";
 import Sidebar from "@/components/layouts/Sidebar";
 
-const inter = Inter({ subsets: ["latin"] });
+const workSans = Work_Sans({ 
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
 
 export const metadata: Metadata = {
   title: "Sieve – AI-Assisted Screening",
@@ -18,10 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={workSans.className}>
         <div className="flex h-screen bg-background">
           <Sidebar />
-          <main className="flex-1 overflow-auto p-6">{children}</main>
+          <main className="flex-1 overflow-auto">{children}</main>
         </div>
       </body>
     </html>

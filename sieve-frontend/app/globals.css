@@ -14,8 +14,8 @@
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-sans: "Work Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
   
   --radius-card: 12px;
   --radius-input: 8px;

@@ -2,52 +2,159 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Briefcase,
   Users,
+  ListChecks,
   BarChart3,
   Settings,
+  HelpCircle,
+  Key,
+  ChevronLeft,
+  ChevronRight,
+  Menu,
 } from "lucide-react";
 
-const navItems = [
+const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/jobs", label: "Jobs", icon: Briefcase },
-  { href: "/applicants", label: "Applicants", icon: Users },
+  { href: "/jobs", label: "Jobs", icon: Briefcase, badge: "3" },
+  { href: "/candidates", label: "Candidates", icon: Users },
+  { href: "/sessions", label: "Sessions", icon: ListChecks, badge: "5" },
   { href: "/intelligence", label: "Intelligence", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+];
+
+const settingsNavItems = [
+  { href: "/preferences", label: "Preferences", icon: Settings },
+  { href: "/api-config", label: "API Config", icon: Key },
+  { href: "/help", label: "Help & Docs", icon: HelpCircle },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="w-60 h-screen bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-primary">SIEVE</h1>
-      </div>
-      <nav className="flex-1 px-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                isActive
-                  ? "bg-primary-light text-primary border-l-4 border-primary"
-                  : "text-secondary hover:bg-gray-50 hover:text-primary"
-              }`}
-            >
-              <item.icon className="w-5 h-5 mr-3" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="p-4 border-t border-gray-200">
-        <div className="text-xs text-secondary">Umurava Hackathon 2026</div>
-      </div>
-    </aside>
+    <>
+      {/* Mobile overlay */}
+      <div className="sidebar-overlay" id="sidebarOverlay" />
+
+      <aside
+        className={`bg-[#2563eb] flex flex-col sticky top-0 h-screen flex-shrink-0 transition-all duration-300 z-20 ${
+          collapsed ? "w-16" : "w-60"
+        }`}
+      >
+        {/* Collapse toggle button */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute top-[22px] -right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-[#e2e8f0] text-[#2563eb] cursor-pointer z-25 transition-all text-xs"
+        >
+          {collapsed ? (
+            <ChevronRight className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronLeft className="w-3.5 h-3.5" />
+          )}
+        </button>
+
+        {/* Logo */}
+        <div className="px-4 pb-5 pt-5 flex items-center gap-2.5 border-b border-white/15 mb-2">
+          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-white text-base border border-white/25">
+            <Briefcase className="w-5 h-5" />
+          </div>
+          {!collapsed && (
+            <div>
+              <h1 className="font-extrabold text-[17px] text-white tracking-tight">
+                Sieve
+              </h1>
+              <span className="text-[10px] text-white/65 font-medium">
+                AI-Assisted Screening
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Main Navigation */}
+        <div className="px-2.5 py-0.5">
+          {!collapsed && (
+            <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">
+              Main Menu
+            </div>
+          )}
+
+          {mainNavItems.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl font-medium text-[13px] transition-all ${
+                  isActive
+                    ? "bg-white text-[#2563eb] font-bold"
+                    : "text-white hover:bg-white/15"
+                } ${collapsed ? "justify-center" : ""}`}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                {!collapsed && (
+                  <>
+                    <span className="flex-1">{item.label}</span>
+                    {item.badge && (
+                      <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-xl font-bold">
+                        {item.badge}
+                      </span>
+                    )}
+                  </>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Settings Navigation */}
+        <div className="px-2.5 py-0.5 mt-1">
+          {!collapsed && (
+            <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">
+              Settings
+            </div>
+          )}
+
+          {settingsNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl font-medium text-[13px] transition-all ${
+                  isActive
+                    ? "bg-white text-[#2563eb] font-bold"
+                    : "text-white hover:bg-white/15"
+                } ${collapsed ? "justify-center" : ""}`}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Team Card */}
+        <div className="mt-auto mx-2.5 mb-4">
+          <div className="bg-white/15 rounded-xl p-3 border border-white/18 flex items-center gap-2.5 cursor-pointer hover:bg-white/20 transition-all">
+            <div className="w-[34px] h-[34px] rounded-lg bg-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <span className="text-white font-bold text-xs">WT</span>
+            </div>
+            {!collapsed && (
+              <>
+                <div className="flex-1">
+                  <h4 className="font-bold text-[13px] text-white">WeThinkCode_</h4>
+                  <p className="text-[10px] text-white/75">Coding academy</p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-white/70" />
+              </>
+            )}
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
