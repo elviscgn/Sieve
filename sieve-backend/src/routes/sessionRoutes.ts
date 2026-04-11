@@ -1,10 +1,12 @@
 import { Router } from 'express';
-import { evaluateAllApplicants } from '../controllers/applicantController';
+import { evaluateAllApplicants, getSessionResults } from '../controllers/applicantController';
 
 const router = Router();
 
 // Matches blueprint: POST /api/sessions
-// This triggers the bulk evaluation
 router.post('/', evaluateAllApplicants);
+
+// Matches blueprint: GET /api/sessions/:id/results
+router.get('/:id/results', getSessionResults);
 
 export default router;

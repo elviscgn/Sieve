@@ -110,3 +110,51 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error during bulk evaluation' });
   }
 };
+
+export const getSessionResults = async (req: Request, res: Response) => {
+  try {
+    // The ID in the URL represents the context of the session (the Job ID)
+    const jobId = req.params.id;
+
+    // 1. Fetch all applicants that HAVE an evaluation object, sorted by score (highest first)
+    const applicants = await Applicant.find({ 
+      jobId: jobId,
+      evaluation: { $exists: true } 
+    }).sort({ 'evaluation.score': -1 });
+
+    if (applicants.length === 0) {
+      return res.status(404).json({ message: 'No evaluated candidates found for this session' });
+    }
+
+    // 2. Map the raw database output to the exact schema the blueprint requires
+    const rankedShortlist = applicants.map((app, index) => {
+      const score = app.evaluation?.score || 0;
+
+      // Calculate confidence tags based on the blueprint rules
+      let confidence = 'high';
+      if (score <= 60 && score >= 40) confidence = 'medium';
+      if (score < 40) confidence = 'low';
+
+      return {
+        applicantId: app._id,
+        name: app.profile.name || 'Unknown Candidate',
+        aiRank: index + 1, // Automatically assigned based on the -1 database sort
+        recruiterRank: null, // Left null until the recruiter drag-to-reranks
+        compositeScore: score,
+        justification: app.evaluation?.justification,
+        confidence: confidence,
+        profile: app.profile // Sending the raw profile so the UI can render details
+      };
+    });
+
+    // 3. Return the payload
+    res.status(200).json({
+      message: 'Shortlist retrieved successfully',
+      results: rankedShortlist
+    });
+
+  } catch (error) {
+    console.error('Error fetching session results:', error);
+    res.status(500).json({ message: 'Server error retrieving shortlist' });
+  }
+};
