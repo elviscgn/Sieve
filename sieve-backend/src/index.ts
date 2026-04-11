@@ -3,7 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import jobRoutes from './routes/jobRoutes';
-import { apiKeyAuth } from './middleware/auth'; // 1. Import the bouncer
+import { apiKeyAuth } from './middleware/auth'; 
+import sessionRoutes from './routes/sessionRoutes';
 
 dotenv.config();
 
@@ -20,8 +21,11 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'success', message: 'Sieve API is running' });
 });
 
-// 2. Protect all /api/jobs routes by putting the middleware in the middle
+/// Protect all /api/jobs routes
 app.use('/api/jobs', apiKeyAuth, jobRoutes); 
+
+// Protect all /api/sessions routes
+app.use('/api/sessions', apiKeyAuth, sessionRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
