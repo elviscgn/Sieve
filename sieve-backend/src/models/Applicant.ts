@@ -11,7 +11,6 @@ export interface IApplicant extends Document {
   };
 }
 
-// 2. Tell MongoDB about the new evaluation field
 const ApplicantSchema: Schema = new Schema({
   jobId: { type: Schema.Types.ObjectId, ref: 'Job', required: true },
   source: { type: String, required: true },

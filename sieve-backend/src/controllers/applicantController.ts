@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Applicant from '../models/Applicant';
 import Job from '../models/Job';
 import { evaluateCandidate } from '../services/aiService';
+import globalEmitter from '../utils/eventEmitter';
 
 export const ingestApplicants = async (req: Request, res: Response) => {
   try {
@@ -66,12 +67,9 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
     const results: { name: string; score: number; status: string }[] = [];
     
     for (const applicant of applicants) {
-      // FIX 2: Inner try-catch for Fault Tolerance
       try {
-        // Call our Bulletproof AI Service
         const aiResult = await evaluateCandidate(applicant.profile, job.rubric.dimensions);
 
-        // Save the score and justification back to the applicant document
         applicant.evaluation = {
           score: aiResult.score,
           justification: aiResult.justification,
@@ -87,6 +85,15 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
           status: 'Success'
         });
 
+        // NEW: Broadcast the success message!
+        globalEmitter.emit('evaluationProgress', {
+          jobId: jobId,
+          applicantId: applicant._id,
+          name: (applicant.profile as any).name || 'Unknown',
+          status: 'Complete',
+          score: aiResult.score
+        });
+
       } catch (candidateError) {
         // If this specific candidate fails, log it, but DON'T crash the loop!
         console.error(`Failed to evaluate candidate ${(applicant.profile as any).name}:`, candidateError);
@@ -94,6 +101,12 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
         results.push({ 
           name: (applicant.profile as any).name || 'Unknown', 
           score: 0,
+          status: 'Failed'
+        });
+        globalEmitter.emit('evaluationProgress', {
+          jobId: jobId,
+          applicantId: applicant._id,
+          name: (applicant.profile as any).name || 'Unknown',
           status: 'Failed'
         });
       }
@@ -157,4 +170,28 @@ export const getSessionResults = async (req: Request, res: Response) => {
     console.error('Error fetching session results:', error);
     res.status(500).json({ message: 'Server error retrieving shortlist' });
   }
+};
+
+export const streamSessionProgress = (req: Request, res: Response) => {
+  const jobId = req.params.id;
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); 
+
+  const progressListener = (data: any) => {
+    // Only send data if the event belongs to the specific job this UI is looking at
+    if (data.jobId === jobId) {
+      // SSE format requires starting with "data: " and ending with "\n\n"
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
+  };
+
+  globalEmitter.on('evaluationProgress', progressListener);
+
+  req.on('close', () => {
+    globalEmitter.off('evaluationProgress', progressListener);
+    res.end();
+  });
 };
