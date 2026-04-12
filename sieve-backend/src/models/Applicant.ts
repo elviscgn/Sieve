@@ -3,11 +3,12 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IApplicant extends Document {
   jobId: mongoose.Types.ObjectId;
   source: string;
-  profile: any; 
+  profile: any;
   evaluation?: {
     score: number;
     justification: string;
     evaluatedAt: Date;
+    recruiterRank?: number; 
   };
 }
 
@@ -18,7 +19,8 @@ const ApplicantSchema: Schema = new Schema({
   evaluation: {
     score: { type: Number },
     justification: { type: String },
-    evaluatedAt: { type: Date }
+    evaluatedAt: { type: Date },
+    recruiterRank: { type: Number }
   }
 }, { timestamps: true });
 

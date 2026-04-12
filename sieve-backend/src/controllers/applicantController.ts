@@ -195,3 +195,39 @@ export const streamSessionProgress = (req: Request, res: Response) => {
     res.end();
   });
 };
+
+export const overrideCandidateRank = async (req: Request, res: Response) => {
+  try {
+    // The ID in the URL is the Session context (Job ID)
+    const jobId = req.params.id;
+    
+    // The body contains the specific candidate and where the recruiter dragged them
+    const { applicantId, newRank } = req.body;
+
+    if (!applicantId || typeof newRank !== 'number') {
+      return res.status(400).json({ message: 'applicantId and newRank are required' });
+    }
+
+    // 1. Find the specific applicant for this specific job
+    const applicant = await Applicant.findOne({ _id: applicantId, jobId: jobId });
+
+    if (!applicant || !applicant.evaluation) {
+      return res.status(404).json({ message: 'Applicant not found or not yet evaluated' });
+    }
+
+    // 2. Apply the recruiter's override
+    applicant.evaluation.recruiterRank = newRank;
+    await applicant.save();
+
+    // 3. Return a success message so the frontend can highlight the overridden row
+    res.status(200).json({
+      message: 'Recruiter override logged successfully',
+      applicantId: applicant._id,
+      recruiterRank: newRank
+    });
+
+  } catch (error) {
+    console.error('Error overriding rank:', error);
+    res.status(500).json({ message: 'Server error saving override' });
+  }
+};
