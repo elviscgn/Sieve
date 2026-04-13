@@ -8,6 +8,15 @@ export interface IEvaluationResult {
   score: number;
   justification: string;
 }
+export interface IComparisonResult {
+  narrative: string;
+  dimensionBreakdown: {
+    dimension: string;
+    winner: string;
+    analysis: string;
+  }[];
+  recommendation: string;
+}
 
 // 1. Initialize the SDK
 const apiKey = process.env.GEMINI_API_KEY;
@@ -26,16 +35,100 @@ export const generateRubricFromJD = async (rawJD: string): Promise<IDimension[]>
     });
 
     const prompt = `
-      You are an expert technical recruiter and system evaluator. 
-      Analyze the following raw job description and extract a 5-dimension grading rubric to evaluate candidates.
-      
-      Rules:
-      1. You must create exactly 5 dimensions.
-      2. Each dimension must have a "name" (string).
-      3. Each dimension must have a "weight" (number). The sum of all 5 weights MUST equal 100.
-      4. Each dimension must have a "keywords" array containing 5-10 specific technical or soft-skill keywords.
-      
-      Output an array of objects.
+      You are a recruitment analyst preparing a structured scoring rubric 
+    for AI-based candidate evaluation.
+
+    IMPORTANT CONTEXT: The rubric you produce will be used to score 
+    candidate profiles. The keywords you extract will be matched directly 
+    against candidate skill names, job titles, technologies used in 
+    projects, and experience descriptions. Extract keywords that are 
+    specific, matchable, and directly present in the job description.
+
+
+    YOUR TASK:
+    Analyze the job description and fill in the description and keywords 
+    for each dimension below. The dimension names and weights are fixed -- 
+    do not change them. Your only job is to write accurate, JD-specific 
+    descriptions and extract precise keywords.
+
+    DESCRIPTION QUALITY RULES:
+    - Each description must be 2-3 sentences
+    - Must reference specific requirements from this JD, not generic statements
+    - Must be specific enough to guide an AI scoring a candidate profile
+    - Bad example: "Technical skills relevant to the role"
+    - Good example: "Candidate must demonstrate proficiency in React and 
+      TypeScript with evidence of production deployments. Node.js backend 
+      experience and familiarity with REST API design are strongly 
+      preferred. Cloud platform exposure (AWS or GCP) is a bonus."
+
+    KEYWORD EXTRACTION RULES:
+    - Extract only terms explicitly mentioned or strongly implied in the JD
+    - For Technical Skills: extract specific technologies, frameworks, 
+      languages, tools (e.g. "React", "TypeScript", "PostgreSQL", "Docker")
+    - For Experience Relevance: extract role titles, domains, seniority 
+      signals (e.g. "frontend engineer", "4 years", "production", "shipped")
+    - For Education Alignment: extract degrees, fields, certifications 
+      mentioned. If JD does not mention education, return ["not specified"]
+    - For Profile Fit: extract portfolio signals mentioned 
+      (e.g. "GitHub", "portfolio", "open source", "side projects")
+    - For Red Flag Indicators: extract explicit warnings plus infer 
+      common mismatches for this role type 
+      (e.g. "no frontend experience", "only backend", "career gap")
+    - Each keywords array must have between 3 and 12 items
+    - Keywords must be lowercase strings
+
+    FALLBACK RULE: If the JD provides no information for a dimension, 
+    write a sensible default description for the role type inferred 
+    from the JD and note "(inferred)" at the end of the description.
+
+    Return ONLY the following JSON. No markdown, no explanation, 
+    no preamble. The JSON must be valid and parseable.
+
+    {
+      "dimensions": [
+        {
+          "name": "Technical Skills Match",
+          "description": "YOUR 2-3 SENTENCE JD-SPECIFIC DESCRIPTION",
+          "weight": 30,
+          "keywords": ["specific", "tech", "terms", "from", "JD"]
+        },
+        {
+          "name": "Experience Relevance",
+          "description": "YOUR 2-3 SENTENCE JD-SPECIFIC DESCRIPTION",
+          "weight": 25,
+          "keywords": ["role", "titles", "seniority", "domain", "signals"]
+        },
+        {
+          "name": "Education Alignment",
+          "description": "YOUR 2-3 SENTENCE JD-SPECIFIC DESCRIPTION",
+          "weight": 15,
+          "keywords": ["degree", "field", "certifications"]
+        },
+        {
+          "name": "Profile Fit",
+          "description": "YOUR 2-3 SENTENCE JD-SPECIFIC DESCRIPTION",
+          "weight": 15,
+          "keywords": ["portfolio", "github", "projects", "contributions"]
+        },
+        {
+          "name": "Red Flag Indicators",
+          "description": "YOUR 2-3 SENTENCE JD-SPECIFIC DESCRIPTION",
+          "weight": 15,
+          "keywords": ["gap", "mismatch", "overqualified", "unrelated"]
+        }
+      ],
+      "dealbreakers": [
+        "list only hard requirements explicitly stated in the JD",
+        "if none stated, return empty array"
+      ],
+      "niceToHave": [
+        "list only nice-to-haves explicitly stated in the JD",
+        "if none stated, return empty array"
+      ]
+    }
+
+    Weights must sum to exactly 100. Do not change the weights.
+    Do not add or remove dimensions.
       
       Job Description:
       """
@@ -101,5 +194,44 @@ export const evaluateCandidate = async (applicantProfile: any, rubric: IDimensio
   } catch (error) {
     console.error('Error evaluating candidate:', error);
     throw new Error('Failed to evaluate candidate via AI');
+  }
+};
+
+export const compareCandidates = async (jobTitle: string, rubric: any, candidates: any[]): Promise<IComparisonResult> => {
+  try {
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: 'application/json' }
+    });
+
+    const prompt = `
+      Compare these candidates for the following role and recommend which to prioritize.
+      
+      JOB: ${jobTitle}
+      RUBRIC: ${JSON.stringify(rubric, null, 2)}
+      CANDIDATES AND THEIR RESULTS: ${JSON.stringify(candidates, null, 2)}
+      
+      Structure your response as JSON:
+      {
+        "narrative": "2-3 paragraph overall comparison",
+        "dimensionBreakdown": [
+          {
+            "dimension": "Technical Skills Match",
+            "winner": "candidateId",
+            "analysis": "one sentence per candidate"
+          }
+        ],
+        "recommendation": "which candidate to prioritize and why in 2 sentences"
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    
+    return JSON.parse(responseText) as IComparisonResult;
+
+  } catch (error) {
+    console.error('Error generating candidate comparison:', error);
+    throw new Error('Failed to generate comparison via AI');
   }
 };
