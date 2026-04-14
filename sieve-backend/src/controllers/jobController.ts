@@ -27,14 +27,15 @@ export const generateRubric = async (req: Request, res: Response) => {
     }
 
 
-    const generatedRubric = await generateRubricFromJD(job.rawJD);
-
-    // 3. Update the Job document with the new AI rubric
-    job.rubric = {
-      dimensions: generatedRubric
-    };
+    const aiResult = await generateRubricFromJD(job.rawJD);
     
-    // 4. Save the updated job back to MongoDB
+    // Strictly map the AI's master object to our schema
+    job.rubric = {
+      dimensions: aiResult.dimensions || [],
+      dealbreakers: aiResult.dealbreakers || [],
+      niceToHave: aiResult.niceToHave || []
+    };
+
     await job.save();
 
     // 5. Send the updated job back to the frontend

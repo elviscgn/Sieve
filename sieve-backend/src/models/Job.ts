@@ -12,6 +12,8 @@ export interface IJob extends Document {
   rawJD: string;
   rubric?: {
     dimensions: IDimension[];
+    dealbreakers: string[]; 
+    niceToHave: string[];
     confirmedBy?: string;
     confirmedAt?: Date;
   };
@@ -31,6 +33,8 @@ const JobSchema: Schema = new Schema(
           keywords: [{ type: String }],
         },
       ],
+      dealbreakers: [{ type: String }],
+      niceToHave: [{ type: String }],
       confirmedBy: { type: String },
       confirmedAt: { type: Date },
     },

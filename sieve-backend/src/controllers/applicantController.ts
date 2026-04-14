@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Applicant from '../models/Applicant';
 import Job from '../models/Job';
-import { evaluateCandidate } from '../services/aiService';
+import { evaluateCandidate, compareCandidates, streamCandidateQA, IAIGeneratedRubric } from '../services/aiService';
 import globalEmitter from '../utils/eventEmitter';
 
 export const ingestApplicants = async (req: Request, res: Response) => {
@@ -194,4 +194,137 @@ export const streamSessionProgress = (req: Request, res: Response) => {
     globalEmitter.off('evaluationProgress', progressListener);
     res.end();
   });
+};
+
+export const overrideCandidateRank = async (req: Request, res: Response) => {
+  try {
+    // The ID in the URL is the Session context (Job ID)
+    const jobId = req.params.id;
+    
+    // The body contains the specific candidate and where the recruiter dragged them
+    const { applicantId, newRank } = req.body;
+
+    if (!applicantId || typeof newRank !== 'number') {
+      return res.status(400).json({ message: 'applicantId and newRank are required' });
+    }
+
+    // 1. Find the specific applicant for this specific job
+    const applicant = await Applicant.findOne({ _id: applicantId, jobId: jobId });
+
+    if (!applicant || !applicant.evaluation) {
+      return res.status(404).json({ message: 'Applicant not found or not yet evaluated' });
+    }
+
+    // 2. Apply the recruiter's override
+    applicant.evaluation.recruiterRank = newRank;
+    await applicant.save();
+
+    // 3. Return a success message so the frontend can highlight the overridden row
+    res.status(200).json({
+      message: 'Recruiter override logged successfully',
+      applicantId: applicant._id,
+      recruiterRank: newRank
+    });
+
+  } catch (error) {
+    console.error('Error overriding rank:', error);
+    res.status(500).json({ message: 'Server error saving override' });
+  }
+};
+
+export const compareSelectedCandidates = async (req: Request, res: Response) => {
+  // 1. OVERRIDE THE DEFAULT TIMEOUT
+  // Tell Node.js to wait up to 5 minutes (300,000 ms) before cutting the connection
+  req.setTimeout(300000);
+  res.setTimeout(300000);
+
+  try {
+    const jobId = req.params.id;
+    const { candidateIds } = req.body;
+
+    if (!Array.isArray(candidateIds) || candidateIds.length < 2 || candidateIds.length > 3) {
+      return res.status(400).json({ message: 'Please provide an array of exactly 2 or 3 candidateIds' });
+    }
+
+    const job = await Job.findById(jobId);
+    if (!job || !job.rubric) {
+      return res.status(404).json({ message: 'Job or rubric not found' });
+    }
+
+    // 2. THE LEAN() OPTIMIZATION
+    // This strips out all heavy Mongoose tracking metadata and returns pure, lightweight JSON
+    const applicants = await Applicant.find({ 
+      _id: { $in: candidateIds },
+      jobId: jobId 
+    }).lean(); 
+
+    if (applicants.length !== candidateIds.length) {
+      return res.status(404).json({ message: 'One or more candidates not found in this session' });
+    }
+
+    // Format the clean data for Gemini
+    const candidatesForAI = applicants.map(app => ({
+      candidateId: app._id,
+      name: (app.profile as any).name || 'Unknown',
+      profile: app.profile,
+      evaluation: app.evaluation 
+    }));
+
+    // Fire the comparison engine
+    const comparison = await compareCandidates(job.title || 'this role', job.rubric.dimensions, candidatesForAI);
+
+    res.status(200).json({
+      message: 'Comparison generated successfully',
+      comparison: comparison
+    });
+
+  } catch (error) {
+    console.error('Error in candidate comparison:', error);
+    res.status(500).json({ message: 'Server error generating comparison' });
+  }
+};
+
+export const askApplicantQuestion = async (req: Request, res: Response) => {
+  try {
+    const applicantId = req.params.id;
+    const { question, jobId } = req.body;
+
+    if (!question || !jobId) {
+      return res.status(400).json({ message: "question and jobId are required in the body" });
+    }
+
+    const job = await Job.findById(jobId);
+    const applicant = await Applicant.findById(applicantId);
+
+    if (!job || !applicant) {
+      return res.status(404).json({ message: "Job or Applicant not found" });
+    }
+
+    if (!job.rubric || !job.rubric.dimensions || job.rubric.dimensions.length === 0) {
+      return res.status(400).json({ message: "You must generate a rubric for this job first." });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = await streamCandidateQA(
+      question, 
+      applicant.profile, 
+      job.rubric as IAIGeneratedRubric
+    );
+
+    for await (const chunk of stream) {
+      const chunkText = chunk.text();
+      res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+    }
+
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Error in Q&A stream:', error);
+    res.write(`data: ${JSON.stringify({ error: "Stream failed" })}\n\n`);
+    res.end();
+  }
 };
