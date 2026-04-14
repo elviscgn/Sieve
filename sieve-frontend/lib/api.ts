@@ -8,7 +8,7 @@ export const apiClient = {
     return res.json();
   },
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any, p0?: { headers: {}; }): Promise<T> {
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
