@@ -7,6 +7,7 @@ import { apiKeyAuth } from './middleware/auth';
 import sessionRoutes from './routes/sessionRoutes';
 import { setupSwagger } from './config/swagger';
 import applicantRoutes from './routes/applicantRoutes';
+import intelligenceRoutes from './routes/intelligenceRoutes';
 
 dotenv.config();
 
@@ -31,6 +32,9 @@ app.use('/api/sessions', apiKeyAuth, sessionRoutes);
 
 // Protect all /api/applicants routes
 app.use('/api/applicants', applicantRoutes);
+
+// Protect all /api/intelligence routes
+app.use('/api/intelligence', intelligenceRoutes);
 
 // Initialize Swagger UI
 setupSwagger(app);

@@ -306,3 +306,41 @@ export const streamCandidateQA = async (question: string, profile: UmuravaProfil
     throw new Error('Failed to stream Q&A response');
   }
 };
+
+export const generateIntelligenceInsights = async (sessionsSummary: any) => {
+  try {
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash-lite',
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+      Analyze these recruitment screening sessions and identify patterns in the talent pool.
+      
+      SESSIONS SUMMARY: 
+      ${JSON.stringify(sessionsSummary, null, 2)}
+      
+      Return strictly valid JSON using this exact structure:
+      { 
+        "insights": [
+          {
+            "type": "skill_gap" | "match_rate" | "requirement_mismatch",
+            "title": "short insight title",
+            "description": "2-3 sentences of analysis",
+            "affectedRoles": ["role types"],
+            "recommendation": "one actionable suggestion"
+          }
+        ],
+        "overallMatchRate": number,
+        "topSkillGaps": ["skill1", "skill2", "skill3"]
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('Error generating intelligence insights:', error);
+    throw new Error('Failed to generate intelligence from AI');
+  }
+};
