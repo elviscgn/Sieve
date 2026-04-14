@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Applicant from '../models/Applicant';
 import Job from '../models/Job';
-import { evaluateCandidate } from '../services/aiService';
+import { evaluateCandidate, compareCandidates } from '../services/aiService';
 import globalEmitter from '../utils/eventEmitter';
 
 export const ingestApplicants = async (req: Request, res: Response) => {
@@ -229,5 +229,57 @@ export const overrideCandidateRank = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error overriding rank:', error);
     res.status(500).json({ message: 'Server error saving override' });
+  }
+};
+
+export const compareSelectedCandidates = async (req: Request, res: Response) => {
+  // 1. OVERRIDE THE DEFAULT TIMEOUT
+  // Tell Node.js to wait up to 5 minutes (300,000 ms) before cutting the connection
+  req.setTimeout(300000);
+  res.setTimeout(300000);
+
+  try {
+    const jobId = req.params.id;
+    const { candidateIds } = req.body;
+
+    if (!Array.isArray(candidateIds) || candidateIds.length < 2 || candidateIds.length > 3) {
+      return res.status(400).json({ message: 'Please provide an array of exactly 2 or 3 candidateIds' });
+    }
+
+    const job = await Job.findById(jobId);
+    if (!job || !job.rubric) {
+      return res.status(404).json({ message: 'Job or rubric not found' });
+    }
+
+    // 2. THE LEAN() OPTIMIZATION
+    // This strips out all heavy Mongoose tracking metadata and returns pure, lightweight JSON
+    const applicants = await Applicant.find({ 
+      _id: { $in: candidateIds },
+      jobId: jobId 
+    }).lean(); 
+
+    if (applicants.length !== candidateIds.length) {
+      return res.status(404).json({ message: 'One or more candidates not found in this session' });
+    }
+
+    // Format the clean data for Gemini
+    const candidatesForAI = applicants.map(app => ({
+      candidateId: app._id,
+      name: (app.profile as any).name || 'Unknown',
+      profile: app.profile,
+      evaluation: app.evaluation 
+    }));
+
+    // Fire the comparison engine
+    const comparison = await compareCandidates(job.title || 'this role', job.rubric.dimensions, candidatesForAI);
+
+    res.status(200).json({
+      message: 'Comparison generated successfully',
+      comparison: comparison
+    });
+
+  } catch (error) {
+    console.error('Error in candidate comparison:', error);
+    res.status(500).json({ message: 'Server error generating comparison' });
   }
 };

@@ -20,6 +20,7 @@ benchmarks/graphs
 
 # Local API test outputs
 test_output.json
+comparison_output.json
 
 # ignore additional files using core.excludesFile
 # https://git-scm.com/docs/gitignore
