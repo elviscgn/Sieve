@@ -1,36 +1,30 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+// lib/api.ts
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-type FetchOptions = RequestInit & {
-  params?: Record<string, string>;
-};
+export const apiClient = {
+  async get<T>(endpoint: string): Promise<T> {
+    const res = await fetch(`${API_BASE}${endpoint}`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  },
 
-export async function apiClient<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T> {
-  const { params, ...fetchOptions } = options;
-  
-  const url = new URL(`${API_BASE}${endpoint}`);
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, value);
+  async post<T>(endpoint: string, data?: any): Promise<T> {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-  }
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  },
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...fetchOptions.headers,
-  };
-
-  const res = await fetch(url.toString(), {
-    ...fetchOptions,
-    headers,
-  });
-
-  if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`API error ${res.status}: ${error}`);
-  }
-
-  return res.json();
-}
+  async put<T>(endpoint: string, data?: any): Promise<T> {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return res.json();
+  },
+};
