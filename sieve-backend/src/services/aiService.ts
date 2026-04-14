@@ -18,6 +18,12 @@ export interface IComparisonResult {
   recommendation: string;
 }
 
+export interface IAIGeneratedRubric {
+  dimensions: IDimension[];
+  dealbreakers: string[];
+  niceToHave: string[];
+}
+
 // 1. Initialize the SDK
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
@@ -26,8 +32,7 @@ if (!apiKey) {
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // 2. The Generation Function
-export const generateRubricFromJD = async (rawJD: string): Promise<IDimension[]> => {
-  try {
+export const generateRubricFromJD = async (rawJD: string): Promise<IAIGeneratedRubric> => {  try {
     // 1. The Magic Bullet: Force the SDK to only allow valid JSON
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash-lite',
