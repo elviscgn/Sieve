@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* Your custom Sieve theme goes here using CSS variables */
 @theme {
+  /* Sieve Color System */
   --color-primary: #2B71F0;
   --color-primary-light: #EFF4FF;
   --color-background: #F8F9FC;
@@ -14,13 +14,38 @@
   --color-warning: #F59E0B;
   --color-danger: #EF4444;
   
+  /* Typography */
   --font-sans: "Work Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   
+  /* Font Sizes */
+  --text-h1: 28px;
+  --text-h1--line-height: 1.2;
+  --text-h1--font-weight: 700;
+  
+  --text-h2: 22px;
+  --text-h2--line-height: 1.3;
+  --text-h2--font-weight: 600;
+  
+  --text-h3: 16px;
+  --text-h3--line-height: 1.4;
+  --text-h3--font-weight: 600;
+  
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
+  --text-body--font-weight: 400;
+  
+  --text-label: 12px;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+  --text-label--letter-spacing: 0.05em;
+  
+  /* Border Radius */
   --radius-card: 12px;
   --radius-input: 8px;
   --radius-tag: 6px;
   
+  /* Shadows */
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
@@ -31,4 +56,35 @@
     color: var(--color-text-primary);
     font-family: var(--font-sans);
   }
+}
+
+@layer utilities {
+  .text-h1 { font-size: var(--text-h1); font-weight: var(--text-h1--font-weight); line-height: var(--text-h1--line-height); }
+  .text-h2 { font-size: var(--text-h2); font-weight: var(--text-h2--font-weight); line-height: var(--text-h2--line-height); }
+  .text-h3 { font-size: var(--text-h3); font-weight: var(--text-h3--font-weight); line-height: var(--text-h3--line-height); }
+  .text-body { font-size: var(--text-body); font-weight: var(--text-body--font-weight); line-height: var(--text-body--line-height); }
+  .text-label { font-size: var(--text-label); font-weight: var(--text-label--font-weight); letter-spacing: var(--text-label--letter-spacing); text-transform: uppercase; }
+  
+  .bg-primary-pale { background-color: #eff6ff; }
+  .bg-primary-dark { background-color: #1d4ed8; }
+  .border-primary-light { border-color: #3b82f6; }
+  .text-primary-light { color: #3b82f6; }
+  
+  .animate-fadeUp {
+    animation: fadeUp 0.35s ease both;
+  }
+  
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #bfdbfe transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
