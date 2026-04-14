@@ -39,7 +39,6 @@ export const ingestApplicants = async (req: Request, res: Response) => {
 
 export const evaluateAllApplicants = async (req: Request, res: Response) => {
   try {
-    // FIX: Pull jobId from the request body instead of the URL parameters
     const { jobId } = req.body;
 
     if (!jobId) {
@@ -53,9 +52,10 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
     }
     
     // 2. Find all applicants for this job that DON'T have a score yet
+    // THE FIX: We check if evaluation.score is missing, rather than the whole object
     const applicants = await Applicant.find({ 
       jobId: jobId, 
-      evaluation: { $exists: false } 
+      'evaluation.score': { $exists: false } 
     });
 
     if (applicants.length === 0) {
@@ -63,29 +63,29 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
     }
 
     // 3. The Evaluation Loop
-    // FIX 1: Explicitly type the results array so TypeScript doesn't panic
     const results: { name: string; score: number; status: string }[] = [];
     
     for (const applicant of applicants) {
       try {
         const aiResult = await evaluateCandidate(applicant.profile, job.rubric.dimensions);
 
+        // Save the score, justification, gaps, and strengths
         applicant.evaluation = {
           score: aiResult.score,
           justification: aiResult.justification,
+          gaps: aiResult.gaps,
+          strengths: aiResult.strengths,
           evaluatedAt: new Date()
         };
 
         await applicant.save();
         
-        // Push success to the array
         results.push({ 
           name: (applicant.profile as any).name || 'Unknown', 
           score: aiResult.score,
           status: 'Success'
         });
 
-        // NEW: Broadcast the success message!
         globalEmitter.emit('evaluationProgress', {
           jobId: jobId,
           applicantId: applicant._id,
@@ -95,7 +95,6 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
         });
 
       } catch (candidateError) {
-        // If this specific candidate fails, log it, but DON'T crash the loop!
         console.error(`Failed to evaluate candidate ${(applicant.profile as any).name}:`, candidateError);
         
         results.push({ 
@@ -112,7 +111,7 @@ export const evaluateAllApplicants = async (req: Request, res: Response) => {
       }
     }
 
-    // 4. Return the summary of what happened
+    // 4. Return the summary
     res.status(200).json({
       message: `Successfully processed ${results.length} applicants`,
       evaluations: results
