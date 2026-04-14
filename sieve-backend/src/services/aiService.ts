@@ -8,6 +8,8 @@ dotenv.config();
 export interface IEvaluationResult {
   score: number;
   justification: string;
+  strengths?: string[];
+  gaps?: string[];
 }
 export interface IComparisonResult {
   narrative: string;
@@ -193,11 +195,11 @@ export const generateRubricFromJD = async (rawJD: string): Promise<IAIGeneratedR
   }
 };
 
-export const evaluateCandidate = async (applicantProfile: any, rubric: IDimension[]): Promise<IEvaluationResult> => {
+export const evaluateCandidate = async (applicantProfile: any, rubric: any[]): Promise<any> => {
   try {
     // 1. Initialize the model with the bulletproof JSON configuration
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: { responseMimeType: 'application/json' }
     });
 
@@ -209,7 +211,13 @@ export const evaluateCandidate = async (applicantProfile: any, rubric: IDimensio
       Rules:
       1. Calculate a total score from 0 to 100 based on how well the candidate meets the rubric's dimensions and their specific weights.
       2. Write a 2-3 sentence justification explaining exactly why they received this score.
-      3. Output ONLY a JSON object with exactly two keys: "score" (a number) and "justification" (a string).
+      3. Return strictly valid JSON using this exact structure:
+      {
+        "score": 85,
+        "justification": "Overall reasoning here...",
+        "strengths": ["List up to 3 specific strengths"],
+        "gaps": ["List up to 3 specific missing skills or red flags"]
+      }
       
       Grading Rubric:
       ${JSON.stringify(rubric, null, 2)}
@@ -222,9 +230,15 @@ export const evaluateCandidate = async (applicantProfile: any, rubric: IDimensio
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     
-    // 4. Parsing (Safe because of responseMimeType)
-    const evaluation: IEvaluationResult = JSON.parse(responseText);
-    return evaluation;
+    // 4. Parsing and Safety Guard
+    const parsedResult = JSON.parse(responseText);
+    
+    return {
+      score: parsedResult.score,
+      justification: parsedResult.justification,
+      strengths: parsedResult.strengths || [],
+      gaps: parsedResult.gaps || []
+    };
 
   } catch (error) {
     console.error('Error evaluating candidate:', error);

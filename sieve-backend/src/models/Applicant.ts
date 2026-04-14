@@ -7,6 +7,8 @@ export interface IApplicant extends Document {
   evaluation?: {
     score: number;
     justification: string;
+    gaps?: string[];       
+    strengths?: string[]; 
     evaluatedAt: Date;
     recruiterRank?: number; 
   };
@@ -19,6 +21,8 @@ const ApplicantSchema: Schema = new Schema({
   evaluation: {
     score: { type: Number },
     justification: { type: String },
+    gaps: [{ type: String }],      
+    strengths: [{ type: String }],
     evaluatedAt: { type: Date },
     recruiterRank: { type: Number }
   }
