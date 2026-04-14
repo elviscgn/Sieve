@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-import { IDimension } from '../models/Job'; // Importing our blueprint
+import { IDimension } from '../models/Job';
+import { UmuravaProfile } from '../types';
 
 dotenv.config();
 
@@ -267,5 +268,41 @@ export const compareCandidates = async (jobTitle: string, rubric: any, candidate
   } catch (error) {
     console.error('Error generating candidate comparison:', error);
     throw new Error('Failed to generate comparison via AI');
+  }
+};
+
+export const streamCandidateQA = async (question: string, profile: UmuravaProfile, rubric: IAIGeneratedRubric) => {
+  try {
+    // We stick to lite for high-speed, reliable streaming
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+
+    const prompt = `
+      You are an expert, objective technical recruiter assisting a hiring manager.
+      You have been asked a specific question about a candidate's fit for a role.
+      
+      You must answer the question strictly based on the provided Candidate Profile 
+      and the Job Rubric below. Do NOT invent or hallucinate information. If the 
+      answer cannot be determined from the provided data, state that explicitly.
+      Keep your answer concise, professional, and directly address the recruiter's question.
+
+      === JOB RUBRIC ===
+      ${JSON.stringify(rubric, null, 2)}
+
+      === CANDIDATE PROFILE ===
+      ${JSON.stringify(profile, null, 2)}
+
+      === RECRUITER'S QUESTION ===
+      ${question}
+    `;
+
+    // The Magic: We use generateContentStream instead of generateContent
+    const result = await model.generateContentStream(prompt);
+    
+    // We return the raw stream object directly to the controller
+    return result.stream;
+    
+  } catch (error) {
+    console.error('Error streaming Candidate Q&A from Gemini:', error);
+    throw new Error('Failed to stream Q&A response');
   }
 };
