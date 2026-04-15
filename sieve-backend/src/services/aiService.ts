@@ -249,7 +249,7 @@ export const evaluateCandidate = async (applicantProfile: any, rubric: any[]): P
 export const compareCandidates = async (jobTitle: string, rubric: any, candidates: any[]): Promise<IComparisonResult> => {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: { responseMimeType: 'application/json' }
     });
 
@@ -324,7 +324,7 @@ export const streamCandidateQA = async (question: string, profile: UmuravaProfil
 export const generateIntelligenceInsights = async (sessionsSummary: any) => {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -370,7 +370,7 @@ export const generateIntelligenceInsights = async (sessionsSummary: any) => {
 export const parseResumeToProfile = async (rawResumeText: string) => {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: { responseMimeType: 'application/json' }
     });
 
