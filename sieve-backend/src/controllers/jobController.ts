@@ -53,3 +53,40 @@ export const generateRubric = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateJobRubric = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { rubric } = req.body;
+
+    if (!rubric || !rubric.dimensions) {
+      return res.status(400).json({ message: 'A valid rubric object is required in the request body' });
+    }
+
+    // Ensure the weights still equal exactly 100 before saving
+    const totalWeight = rubric.dimensions.reduce((sum: number, dim: any) => sum + (dim.weight || 0), 0);
+    if (totalWeight !== 100) {
+      return res.status(400).json({ message: `Rubric dimensions must sum to exactly 100. Current sum is ${totalWeight}.` });
+    }
+
+    // Find the job and completely overwrite the rubric field
+    const updatedJob = await Job.findByIdAndUpdate(
+      id,
+      { $set: { rubric: rubric } },
+      { new: true, runValidators: true } // new: true returns the updated document
+    );
+
+    if (!updatedJob) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    res.status(200).json({
+      message: 'Rubric successfully overwritten by recruiter',
+      job: updatedJob
+    });
+
+  } catch (error) {
+    console.error('Error updating job rubric:', error);
+    res.status(500).json({ message: 'Server error while updating rubric' });
+  }
+};
