@@ -17,7 +17,8 @@ export interface IJob extends Document {
     confirmedBy?: string;
     confirmedAt?: Date;
   };
-  // createdAt and updatedAt are automatically added by Mongoose timestamps
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // 2. Mongoose Schema (for the database)
