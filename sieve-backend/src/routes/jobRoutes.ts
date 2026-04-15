@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { createJob, generateRubric, updateJobRubric } from '../controllers/jobController';
 import { ingestApplicants } from '../controllers/applicantController'; 
+import multer from 'multer';
+import { uploadAndParseResume } from '../controllers/applicantController';
 
+// Configure multer to hold the file in memory temporarily
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -119,5 +123,41 @@ router.post('/:id/parse-rubric', generateRubric);
  *         description: Job not found
  */
 router.put('/:id/rubric', updateJobRubric);
+
+
+/**
+ * @swagger
+ * /api/jobs/{id}/upload-resume:
+ *   post:
+ *     summary: Upload and Parse Candidate Resume (PDF)
+ *     description: Accepts a PDF resume, uses AI to extract text, and maps it strictly to the Umurava Talent Profile Schema.
+ *     tags: [Applicants]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The MongoDB ID of the job this applicant is applying for
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               resume:
+ *                 type: string
+ *                 format: binary
+ *                 description: The PDF resume file to parse
+ *     responses:
+ *       201:
+ *         description: Resume parsed and applicant created
+ *       400:
+ *         description: Invalid file format or missing file
+ *       404:
+ *         description: Job not found
+ */
+router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume);
 
 export default router;

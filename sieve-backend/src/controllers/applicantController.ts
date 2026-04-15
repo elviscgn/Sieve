@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import Applicant from '../models/Applicant';
 import Job from '../models/Job';
-import { evaluateCandidate, compareCandidates, streamCandidateQA, IAIGeneratedRubric } from '../services/aiService';
+import { evaluateCandidate, compareCandidates, streamCandidateQA, IAIGeneratedRubric, parseResumeToProfile } from '../services/aiService';
 import globalEmitter from '../utils/eventEmitter';
+import { PdfReader } from 'pdfreader';
 
 export const ingestApplicants = async (req: Request, res: Response) => {
   try {
@@ -325,5 +326,73 @@ export const askApplicantQuestion = async (req: Request, res: Response) => {
     console.error('Error in Q&A stream:', error);
     res.write(`data: ${JSON.stringify({ error: "Stream failed" })}\n\n`);
     res.end();
+  }
+};
+
+// Helper function to turn the callback-based PdfReader into a clean Promise
+const extractTextFromPDF = (buffer: Buffer): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    let extractedText = '';
+    new PdfReader().parseBuffer(buffer, (err, item) => {
+      if (err) {
+        reject(err);
+      } else if (!item) {
+        // When item is null, the PDF is completely finished parsing
+        resolve(extractedText);
+      } else if (item.text) {
+        // Accumulate the text chunks
+        extractedText += item.text + ' ';
+      }
+    });
+  });
+};
+
+export const uploadAndParseResume = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Validate the Job exists
+    const job = await Job.findById(id);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // 2. Validate the uploaded file
+    if (!req.file) {
+      return res.status(400).json({ message: 'No resume PDF file uploaded' });
+    }
+
+    if (req.file.mimetype !== 'application/pdf') {
+      return res.status(400).json({ message: 'Only PDF files are accepted' });
+    }
+
+    // 3. Extract raw text using the NEW pdfreader library
+    const rawText = await extractTextFromPDF(req.file.buffer);
+
+    if (!rawText || rawText.trim() === '') {
+      return res.status(400).json({ message: 'Could not extract text from the provided PDF' });
+    }
+
+    // 4. Send raw text to Gemini to get structured JSON matching the Hackathon Schema
+    const structuredProfile = await parseResumeToProfile(rawText);
+
+    // 5. Save the new applicant to the database
+    const newApplicant = new Applicant({
+      jobId: job._id,
+      source: 'external_upload',
+      profile: structuredProfile
+    });
+
+    await newApplicant.save();
+
+    // 6. Return success
+    res.status(201).json({
+      message: 'Resume successfully parsed and structured applicant created',
+      applicant: newApplicant
+    });
+
+  } catch (error) {
+    console.error('Error uploading and parsing resume:', error);
+    res.status(500).json({ message: 'Server error processing resume upload' });
   }
 };

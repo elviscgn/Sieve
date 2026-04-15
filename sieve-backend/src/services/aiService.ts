@@ -366,3 +366,109 @@ export const generateIntelligenceInsights = async (sessionsSummary: any) => {
     throw new Error('Failed to generate intelligence from AI');
   }
 };
+
+export const parseResumeToProfile = async (rawResumeText: string) => {
+  try {
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: 'application/json' }
+    });
+
+    const prompt = `
+      You are an expert recruitment data extraction AI.
+      Read the following raw, unstructured text extracted from a candidate's PDF resume.
+      
+      Your job is to extract their information and format it STRICTLY into the JSON structure below.
+      
+      CRITICAL RULES:
+      1. You must use the EXACT key names provided, including those with spaces (e.g., "First Name", "Start Date").
+      2. If a piece of information is missing, use an empty string "", an empty array [], or omit the optional field entirely. Do NOT invent data.
+      3. For ENUM fields (level, proficiency, status, type), you MUST choose one of the exact string options provided in the schema comments.
+      4. Dates should generally be formatted as "YYYY-MM" or "YYYY" depending on the section context. If a job is current, "End Date" should be "Present".
+      
+      EXPECTED JSON SCHEMA:
+      {
+        "First Name": "string",
+        "Last Name": "string",
+        "Email": "string",
+        "Headline": "string (create a short professional summary based on experience)",
+        "Bio": "string (optional detailed summary)",
+        "Location": "string (City, Country)",
+        "skills": [
+          {
+            "name": "string",
+            "level": "MUST BE EXACTLY ONE OF: Beginner | Intermediate | Advanced | Expert",
+            "yearsOfExperience": number
+          }
+        ],
+        "languages": [
+          {
+            "name": "string",
+            "proficiency": "MUST BE EXACTLY ONE OF: Basic | Conversational | Fluent | Native"
+          }
+        ],
+        "experience": [
+          {
+            "company": "string",
+            "role": "string",
+            "Start Date": "YYYY-MM",
+            "End Date": "YYYY-MM | Present",
+            "description": "string (key responsibilities and achievements)",
+            "technologies": ["string"],
+            "Is Current": boolean
+          }
+        ],
+        "education": [
+          {
+            "institution": "string",
+            "degree": "string",
+            "Field of Study": "string",
+            "Start Year": number (YYYY),
+            "End Year": number (YYYY)
+          }
+        ],
+        "certifications": [
+          {
+            "name": "string",
+            "issuer": "string",
+            "Issue Date": "YYYY-MM"
+          }
+        ],
+        "projects": [
+          {
+            "name": "string",
+            "description": "string",
+            "technologies": ["string"],
+            "role": "string",
+            "link": "string (optional)",
+            "Start Date": "YYYY-MM",
+            "End Date": "YYYY-MM"
+          }
+        ],
+        "availability": {
+          "status": "MUST BE EXACTLY ONE OF: Available | Open to Opportunities | Not Available",
+          "type": "MUST BE EXACTLY ONE OF: Full-time | Part-time | Contract",
+          "Start Date": "YYYY-MM-DD (optional)"
+        },
+        "socialLinks": {
+          "linkedin": "string (optional)",
+          "github": "string (optional)",
+          "portfolio": "string (optional)"
+        }
+      }
+
+      RAW RESUME TEXT:
+      """
+      ${rawResumeText}
+      """
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    return JSON.parse(responseText);
+
+  } catch (error) {
+    console.error('Error parsing resume via AI:', error);
+    throw new Error('Failed to parse resume into official profile schema');
+  }
+};
