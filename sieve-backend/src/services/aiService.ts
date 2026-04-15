@@ -324,7 +324,7 @@ export const streamCandidateQA = async (question: string, profile: UmuravaProfil
 export const generateIntelligenceInsights = async (sessionsSummary: any) => {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -336,17 +336,25 @@ export const generateIntelligenceInsights = async (sessionsSummary: any) => {
       
       Return strictly valid JSON using this exact structure:
       { 
+        "totalSessionsAnalyzed": number,
+        "overallMatchRate": number,
+        "matchRatesByRole": [
+          { "roleTitle": "string", "averageMatchRate": number }
+        ],
+        "matchRateTrend": [
+          { "date": "YYYY-MM", "roleTitle": "string", "matchRate": number }
+        ],
+        "topSkillGaps": ["skill1", "skill2", "skill3"],
         "insights": [
           {
             "type": "skill_gap" | "match_rate" | "requirement_mismatch",
             "title": "short insight title",
             "description": "2-3 sentences of analysis",
             "affectedRoles": ["role types"],
+            "affectedSessionCount": number,
             "recommendation": "one actionable suggestion"
           }
-        ],
-        "overallMatchRate": number,
-        "topSkillGaps": ["skill1", "skill2", "skill3"]
+        ]
       }
     `;
 
