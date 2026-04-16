@@ -1,26 +1,178 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-[#f4f7fe] text-[#0f172a] antialiased;
+    font-family: "Work Sans", sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .shimmer-bar {
+    @apply rounded-md h-2;
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 400px 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  .candidate-card {
+    @apply transition-all duration-200 border border-[#e2e8f0];
+  }
+  .candidate-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(37,99,235,0.12);
+    @apply border-transparent;
+  }
+
+  .evaluating-card {
+    animation: cardPulse 2s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  .evaluating-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(37,99,235,0.15), transparent);
+    animation: scan 1.4s infinite ease-in-out;
+    pointer-events: none;
+  }
+
+  .card-reveal {
+    animation: cardReveal 0.4s ease forwards;
+    opacity: 0;
+  }
+
+  .log-entry-new {
+    animation: logFadeIn 0.3s ease forwards;
+  }
+
+  .dimension-pill {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: slideUpPill 0.2s ease-out forwards;
+  }
+
+  .status-dot-pulse {
+    @apply inline-block w-2 h-2 rounded-full bg-[#2563eb];
+    animation: statusPulse 1.4s ease-in-out infinite;
+  }
+
+  .flag-tag {
+    @apply text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap;
+  }
+
+  .badge-nowrap {
+    @apply whitespace-nowrap;
+  }
+
+  .completion-banner-bg {
+    background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+  }
+
+  .score-number {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .score-number.visible {
+    opacity: 1;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 99px;
+    animation: progressFill 1.2s ease-out forwards;
+    width: 0%;
+    box-shadow: 0 0 10px rgba(37,99,235,0.4);
+  }
+
+  .rubric-stack {
+    display: flex;
+    height: 8px;
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 12px 0 8px;
+  }
+  .rubric-segment {
+    height: 100%;
+  }
+
+  .ring-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+}
+
+@layer utilities {
+  .delay-1 { animation-delay: 0s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.2s; }
+  .delay-4 { animation-delay: 0.3s; }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+}
+
+@keyframes cardPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  50% { box-shadow: 0 0 0 6px rgba(37,99,235,0.05); }
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+  to { width: var(--target-width, 67%); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes scan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUpPill {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
