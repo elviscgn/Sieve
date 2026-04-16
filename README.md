@@ -16,3 +16,5 @@ AI talent screener with multi-dimensional scoring, live progress feeds, and recr
 ![Status](https://img.shields.io/badge/Status-In_Development-orange?style=flat-square)
 
 </div>
+
+![UI Mockup](./public/dashboard.png)
