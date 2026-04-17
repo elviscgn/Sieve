@@ -1,7 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import dotenv from 'dotenv';
-import { IDimension } from '../models/Job';
-import { UmuravaProfile } from '../types';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
+import { IDimension } from "../models/Job";
+import { UmuravaProfile } from "../types";
 
 dotenv.config();
 
@@ -27,19 +27,21 @@ export interface IAIGeneratedRubric {
   niceToHave: string[];
 }
 
-// 1. Initialize the SDK
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
-  throw new Error('GEMINI_API_KEY is missing in the environment variables');
+  throw new Error("GEMINI_API_KEY is missing in the environment variables");
 }
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// 2. The Generation Function
-export const generateRubricFromJD = async (rawJD: string): Promise<IAIGeneratedRubric> => {  try {
-    // 1. The Magic Bullet: Force the SDK to only allow valid JSON
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' }
+// Generates a structured JSON evaluation rubric from a raw job description using the AI model.
+export const generateRubricFromJD = async (
+  rawJD: string,
+): Promise<IAIGeneratedRubric> => {
+  try {
+    // Enforcing application/json MIME type to guarantee the model outputs natively parseable JSON
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
     const prompt = `
@@ -151,25 +153,26 @@ export const generateRubricFromJD = async (rawJD: string): Promise<IAIGeneratedR
       """
     `;
 
-   const result = await model.generateContent(prompt);
+    const result = await model.generateContent(prompt);
     const rawText = result.response.text();
-    const cleanText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const cleanText = rawText
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
-    // 1. Find the start of the master object
-    const startIndex = cleanText.indexOf('{');
+    const startIndex = cleanText.indexOf("{");
     if (startIndex === -1) {
       throw new Error("No master JSON object found in AI response");
     }
 
-    // 2. The Brace Counter: isolates the master object
+    // Utilizing a depth-counting algorithm to isolate the primary JSON payload and ignore trailing text
     let depth = 0;
     let endIndex = -1;
 
     for (let i = startIndex; i < cleanText.length; i++) {
-      if (cleanText[i] === '{') depth++;
-      else if (cleanText[i] === '}') depth--;
+      if (cleanText[i] === "{") depth++;
+      else if (cleanText[i] === "}") depth--;
 
-      // When depth returns to 0, we found the final closing brace
       if (depth === 0) {
         endIndex = i;
         break;
@@ -180,30 +183,27 @@ export const generateRubricFromJD = async (rawJD: string): Promise<IAIGeneratedR
       throw new Error("Unclosed JSON object in AI response");
     }
 
-    // 3. Extract and parse
     const pureJson = cleanText.substring(startIndex, endIndex + 1);
-    
-    // Notice we removed the strict IDimension[] type here because 
-    // it's now an object containing multiple arrays.
-    const rubric = JSON.parse(pureJson); 
-    
+    const rubric = JSON.parse(pureJson);
+
     return rubric;
-    
   } catch (error) {
-    console.error('Error generating rubric from Gemini:', error);
-    throw new Error('Failed to generate rubric via AI');
+    console.error("Error generating rubric from Gemini:", error);
+    throw new Error("Failed to generate rubric via AI");
   }
 };
 
-export const evaluateCandidate = async (applicantProfile: any, rubric: any[]): Promise<any> => {
+// Evaluates a candidate's profile against a job rubric to return a scored assessment with justifications and identified gaps.
+export const evaluateCandidate = async (
+  applicantProfile: any,
+  rubric: any[],
+): Promise<any> => {
   try {
-    // 1. Initialize the model with the bulletproof JSON configuration
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' }
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
-    // 2. The Strict Prompt Engineering
     const prompt = `
       You are an expert technical recruiter AI.
       Evaluate the following candidate profile strictly against the provided grading rubric.
@@ -226,31 +226,32 @@ export const evaluateCandidate = async (applicantProfile: any, rubric: any[]): P
       ${JSON.stringify(applicantProfile, null, 2)}
     `;
 
-    // 3. Execution
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    // 4. Parsing and Safety Guard
     const parsedResult = JSON.parse(responseText);
-    
+
     return {
       score: parsedResult.score,
       justification: parsedResult.justification,
       strengths: parsedResult.strengths || [],
-      gaps: parsedResult.gaps || []
+      gaps: parsedResult.gaps || [],
     };
-
   } catch (error) {
-    console.error('Error evaluating candidate:', error);
-    throw new Error('Failed to evaluate candidate via AI');
+    console.error("Error evaluating candidate:", error);
+    throw new Error("Failed to evaluate candidate via AI");
   }
 };
 
-export const compareCandidates = async (jobTitle: string, rubric: any, candidates: any[]): Promise<IComparisonResult> => {
+// Analyzes multiple candidate profiles against a job rubric to determine the strongest match and provide a comparative recommendation.
+export const compareCandidates = async (
+  jobTitle: string,
+  rubric: any,
+  candidates: any[],
+): Promise<IComparisonResult> => {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' }
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
     const prompt = `
@@ -276,19 +277,22 @@ export const compareCandidates = async (jobTitle: string, rubric: any, candidate
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-    
-    return JSON.parse(responseText) as IComparisonResult;
 
+    return JSON.parse(responseText) as IComparisonResult;
   } catch (error) {
-    console.error('Error generating candidate comparison:', error);
-    throw new Error('Failed to generate comparison via AI');
+    console.error("Error generating candidate comparison:", error);
+    throw new Error("Failed to generate comparison via AI");
   }
 };
 
-export const streamCandidateQA = async (question: string, profile: UmuravaProfile, rubric: IAIGeneratedRubric) => {
+// Streams a real-time AI response to a specific recruiter question regarding a candidate's fit based on their profile and the job rubric.
+export const streamCandidateQA = async (
+  question: string,
+  profile: UmuravaProfile,
+  rubric: IAIGeneratedRubric,
+) => {
   try {
-    // We stick to lite for high-speed, reliable streaming
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
     const prompt = `
       You are an expert, objective technical recruiter assisting a hiring manager.
@@ -309,23 +313,21 @@ export const streamCandidateQA = async (question: string, profile: UmuravaProfil
       ${question}
     `;
 
-    // The Magic: We use generateContentStream instead of generateContent
+    // Utilizing generateContentStream to yield text chunks immediately as they are generated by the model
     const result = await model.generateContentStream(prompt);
-    
-    // We return the raw stream object directly to the controller
     return result.stream;
-    
   } catch (error) {
-    console.error('Error streaming Candidate Q&A from Gemini:', error);
-    throw new Error('Failed to stream Q&A response');
+    console.error("Error streaming Candidate Q&A from Gemini:", error);
+    throw new Error("Failed to stream Q&A response");
   }
 };
 
+// Analyzes aggregated session and applicant data to identify broader talent pool trends and common skill gaps.
 export const generateIntelligenceInsights = async (sessionsSummary: any) => {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: "application/json" }
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
     const prompt = `
@@ -362,16 +364,17 @@ export const generateIntelligenceInsights = async (sessionsSummary: any) => {
     const responseText = result.response.text();
     return JSON.parse(responseText);
   } catch (error) {
-    console.error('Error generating intelligence insights:', error);
-    throw new Error('Failed to generate intelligence from AI');
+    console.error("Error generating intelligence insights:", error);
+    throw new Error("Failed to generate intelligence from AI");
   }
 };
 
+// Extracts unstructured text from a parsed PDF resume and maps it strictly to the structured JSON schema required for candidate profiles.
 export const parseResumeToProfile = async (rawResumeText: string) => {
   try {
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
-      generationConfig: { responseMimeType: 'application/json' }
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
     const prompt = `
@@ -466,9 +469,8 @@ export const parseResumeToProfile = async (rawResumeText: string) => {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     return JSON.parse(responseText);
-
   } catch (error) {
-    console.error('Error parsing resume via AI:', error);
-    throw new Error('Failed to parse resume into official profile schema');
+    console.error("Error parsing resume via AI:", error);
+    throw new Error("Failed to parse resume into official profile schema");
   }
 };
