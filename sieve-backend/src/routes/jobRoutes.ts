@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { createJob, generateRubric, updateJobRubric } from '../controllers/jobController';
+import { createJob, generateRubric, getAllJobs, updateJobRubric } from '../controllers/jobController';
 import { ingestApplicants } from '../controllers/applicantController'; 
 import multer from 'multer';
 import { uploadAndParseResume } from '../controllers/applicantController';
+import { apiKeyAuth } from '../middleware/auth'; 
+
 
 // Configure multer to hold the file in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
@@ -159,5 +161,36 @@ router.put('/:id/rubric', updateJobRubric);
  *         description: Job not found
  */
 router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume);
+
+/**
+ * @openapi
+ * /api/jobs:
+ *   get:
+ *     summary: Fetch all jobs for the dashboard
+ *     tags: [Jobs]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of all jobs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: number
+ *                   example: 10
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Server error retrieving jobs
+ */
+router.get('/', apiKeyAuth, getAllJobs);
 
 export default router;
