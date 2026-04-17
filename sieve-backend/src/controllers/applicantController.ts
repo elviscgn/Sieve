@@ -3,7 +3,6 @@ import Applicant from '../models/Applicant';
 import Job from '../models/Job';
 import { evaluateCandidate, compareCandidates, streamCandidateQA, IAIGeneratedRubric, parseResumeToProfile } from '../services/aiService';
 import globalEmitter from '../utils/eventEmitter';
-import { PdfReader } from 'pdfreader';
 
 export const ingestApplicants = async (req: Request, res: Response) => {
   try {
@@ -329,11 +328,14 @@ export const askApplicantQuestion = async (req: Request, res: Response) => {
   }
 };
 
-// Helper function to turn the callback-based PdfReader into a clean Promise
-const extractTextFromPDF = (buffer: Buffer): Promise<string> => {
+// Helper function to dynamically import pdfreader and turn it into a Promise
+const extractTextFromPDF = async (buffer: Buffer): Promise<string> => {
+  // Dynamically import the ES module to bypass CommonJS/ESM conflicts
+  const { PdfReader } = await import('pdfreader');
+
   return new Promise((resolve, reject) => {
     let extractedText = '';
-    new PdfReader().parseBuffer(buffer, (err, item) => {
+    new PdfReader().parseBuffer(buffer, (err: any, item: any) => {
       if (err) {
         reject(err);
       } else if (!item) {
