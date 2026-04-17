@@ -3,10 +3,11 @@ import { Work_Sans } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layouts/Sidebar";
 
-const workSans = Work_Sans({ 
+const workSans = Work_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
+  display: "swap", 
 });
 
 export const metadata: Metadata = {
