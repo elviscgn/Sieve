@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartPie,
@@ -35,18 +35,32 @@ const settingsNavItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Load saved state on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") setCollapsed(true);
+    setMounted(true);
+  }, []);
+
+  const toggleCollapse = () => {
+    const newState = !collapsed;
+    setCollapsed(newState);
+    localStorage.setItem("sidebar-collapsed", String(newState));
+  };
 
   return (
     <>
       <div className="sidebar-overlay" id="sidebarOverlay" />
 
       <aside
-        className={`bg-[#2563eb] flex flex-col sticky top-0 h-screen flex-shrink-0 transition-all duration-300 z-20 ${
-          collapsed ? "w-16" : "w-60"
-        }`}
+        className={`bg-[#2563eb] flex flex-col sticky top-0 h-screen flex-shrink-0 z-20 ${
+          mounted ? "transition-all duration-300" : "transition-none"
+        } ${collapsed ? "w-16" : "w-60"}`}
       >
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapse}
           className="absolute top-[22px] -right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-[#e2e8f0] text-[#2563eb] cursor-pointer z-25 transition-all text-xs"
         >
           <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} />
