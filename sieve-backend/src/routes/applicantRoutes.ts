@@ -48,7 +48,42 @@ const router = Router();
  */
 router.post('/:id/ask', askApplicantQuestion);
 
-// Add this line where your other applicant routes are defined
+/**
+ * @openapi
+ * /api/applicants/job/{jobId}:
+ *   get:
+ *     summary: Fetch all applicants for a specific job
+ *     tags: [Applicants]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: jobId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The MongoDB ID of the job to filter applicants by
+ *     responses:
+ *       200:
+ *         description: A list of applicants for the specified job
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: number
+ *                   example: 25
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Server error retrieving applicants
+ */
 router.get('/job/:jobId', apiKeyAuth, getApplicantsByJob);
 
 export default router;

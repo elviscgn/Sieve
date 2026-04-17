@@ -162,7 +162,35 @@ router.put('/:id/rubric', updateJobRubric);
  */
 router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume);
 
-// Add this line where your other job routes are defined
+/**
+ * @openapi
+ * /api/jobs:
+ *   get:
+ *     summary: Fetch all jobs for the dashboard
+ *     tags: [Jobs]
+ *     security:
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of all jobs retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: number
+ *                   example: 10
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: Server error retrieving jobs
+ */
 router.get('/', apiKeyAuth, getAllJobs);
 
 export default router;
