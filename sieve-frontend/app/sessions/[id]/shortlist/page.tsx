@@ -39,7 +39,12 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { faBell as farBell } from "@fortawesome/free-regular-svg-icons";
 import { apiClient } from "@/lib/api";
-import type { ScreeningSession, ScreeningResult, Applicant, Job } from "@/types";
+import type {
+  ScreeningSession,
+  ScreeningResult,
+  Applicant,
+  Job,
+} from "@/types";
 import Sortable from "sortablejs";
 import { div } from "three/tsl";
 
@@ -76,7 +81,9 @@ export default function ShortlistPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [candidates, setCandidates] = useState<CandidateDisplay[]>([]);
   const [recruiterRanks, setRecruiterRanks] = useState<number[]>([]);
-  const [filteredCandidates, setFilteredCandidates] = useState<CandidateDisplay[]>([]);
+  const [filteredCandidates, setFilteredCandidates] = useState<
+    CandidateDisplay[]
+  >([]);
   const [currentFilter, setCurrentFilter] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -84,9 +91,12 @@ export default function ShortlistPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // UI states
-  const [detailPanelCandidate, setDetailPanelCandidate] = useState<CandidateDisplay | null>(null);
+  const [detailPanelCandidate, setDetailPanelCandidate] =
+    useState<CandidateDisplay | null>(null);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
-  const [compareCandidates, setCompareCandidates] = useState<CandidateDisplay[]>([]);
+  const [compareCandidates, setCompareCandidates] = useState<
+    CandidateDisplay[]
+  >([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Refs
@@ -99,31 +109,49 @@ export default function ShortlistPage() {
       setIsLoading(true);
       try {
         // Fetch session results
-        const session = await apiClient.get<ScreeningSession>(`/sessions/${sessionId}/results`);
+        const session = await apiClient.get<ScreeningSession>(
+          `/sessions/${sessionId}/results`,
+        );
         const jobData = await apiClient.get<Job>(`/jobs/${session.jobId}`);
         setJob(jobData);
 
         // Transform results to display format
         const displayCandidates: CandidateDisplay[] = await Promise.all(
           session.results.map(async (result, idx) => {
-            const applicant = await apiClient.get<Applicant>(`/applicants/${result.applicantId}`);
+            const applicant = await apiClient.get<Applicant>(
+              `/applicants/${result.applicantId}`,
+            );
             const profile = applicant.profile;
             const firstName = profile["First Name"] || "";
             const lastName = profile["Last Name"] || "";
             const name = `${firstName} ${lastName}`.trim();
-            const role = profile["Work Experience"]?.[0]?.["Job Title"] || "Candidate";
+            const role =
+              profile["Work Experience"]?.[0]?.["Job Title"] || "Candidate";
             const exp = profile["Work Experience"]?.[0]?.["Start Date"]
               ? `${new Date().getFullYear() - new Date(profile["Work Experience"][0]["Start Date"]).getFullYear()}yrs`
               : "N/A";
-            const skills = profile.Skills?.map(s => s.name).slice(0, 2).join("/") || "";
+            const skills =
+              profile.Skills?.map((s) => s.name)
+                .slice(0, 2)
+                .join("/") || "";
 
             // Dimension scores
             const dimScores = {
-              tech: result.dimensions.find(d => d.name.includes("Technical"))?.score || 0,
-              exp: result.dimensions.find(d => d.name.includes("Experience"))?.score || 0,
-              edu: result.dimensions.find(d => d.name.includes("Education"))?.score || 0,
-              prof: result.dimensions.find(d => d.name.includes("Profile"))?.score || 0,
-              flags: result.dimensions.find(d => d.name.includes("Red Flag"))?.score || 0,
+              tech:
+                result.dimensions.find((d) => d.name.includes("Technical"))
+                  ?.score || 0,
+              exp:
+                result.dimensions.find((d) => d.name.includes("Experience"))
+                  ?.score || 0,
+              edu:
+                result.dimensions.find((d) => d.name.includes("Education"))
+                  ?.score || 0,
+              prof:
+                result.dimensions.find((d) => d.name.includes("Profile"))
+                  ?.score || 0,
+              flags:
+                result.dimensions.find((d) => d.name.includes("Red Flag"))
+                  ?.score || 0,
             };
 
             // Category
@@ -145,9 +173,9 @@ export default function ShortlistPage() {
               strengths: result.strengths,
               gaps: result.gaps,
               aiRec: result.recommendation,
-              rationales: result.dimensions.map(d => d.rationale),
+              rationales: result.dimensions.map((d) => d.rationale),
             };
-          })
+          }),
         );
 
         // Sort by AI rank initially
@@ -168,11 +196,11 @@ export default function ShortlistPage() {
   useEffect(() => {
     let filtered = [...candidates];
     if (currentFilter === "high") {
-      filtered = candidates.filter(c => c.category === "high");
+      filtered = candidates.filter((c) => c.category === "high");
     } else if (currentFilter === "flagged") {
-      filtered = candidates.filter(c => c.flags.length > 0);
+      filtered = candidates.filter((c) => c.flags.length > 0);
     } else if (currentFilter === "low") {
-      filtered = candidates.filter(c => c.category === "low");
+      filtered = candidates.filter((c) => c.category === "low");
     }
 
     // Sort by current recruiter ranks
@@ -195,11 +223,15 @@ export default function ShortlistPage() {
         animation: 200,
         ghostClass: "opacity-40",
         onEnd: (evt) => {
-          const rows = Array.from(tableBodyRef.current?.querySelectorAll(".shortlist-row") || []);
+          const rows = Array.from(
+            tableBodyRef.current?.querySelectorAll(".shortlist-row") || [],
+          );
           const newRanks = [...recruiterRanks];
           rows.forEach((row, newIndex) => {
             const candidateId = row.getAttribute("data-id");
-            const candidateIdx = candidates.findIndex(c => c.id === candidateId);
+            const candidateIdx = candidates.findIndex(
+              (c) => c.id === candidateId,
+            );
             if (candidateIdx !== -1) {
               newRanks[candidateIdx] = newIndex + 1;
             }
@@ -233,7 +265,7 @@ export default function ShortlistPage() {
   };
 
   const resetToAIRanks = () => {
-    const aiRanks = candidates.map(c => c.aiRank);
+    const aiRanks = candidates.map((c) => c.aiRank);
     setRecruiterRanks(aiRanks);
     saveRecruiterRanks(aiRanks);
     showToast("Reset to AI ranks");
@@ -245,14 +277,14 @@ export default function ShortlistPage() {
   };
 
   const handleCompare = () => {
-    const selected = candidates.filter(c => selectedIds.has(c.id));
+    const selected = candidates.filter((c) => selectedIds.has(c.id));
     setCompareCandidates(selected);
     setCompareModalOpen(true);
   };
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds(new Set(filteredCandidates.map(c => c.id)));
+      setSelectedIds(new Set(filteredCandidates.map((c) => c.id)));
     } else {
       setSelectedIds(new Set());
     }
@@ -268,7 +300,11 @@ export default function ShortlistPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen bg-[#f4f7fe] items-center justify-center">
-        <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          className="text-4xl text-primary"
+        />
       </div>
     );
   }
@@ -284,15 +320,24 @@ export default function ShortlistPage() {
               <FontAwesomeIcon icon={faBars} />
             </button>
             <div className="flex items-center bg-[#f8fafc] rounded-full pl-4 pr-1 py-1 border border-[#e2e8f0] min-w-[280px]">
-              <FontAwesomeIcon icon={faSearch} className="text-[#94a3b8] text-[13px]" />
-              <input placeholder="Search candidates..." className="border-0 bg-transparent py-1.5 px-2.5 text-[13px] w-full outline-none" />
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-[#94a3b8] text-[13px]"
+              />
+              <input
+                placeholder="Search candidates..."
+                className="border-0 bg-transparent py-1.5 px-2.5 text-[13px] w-full outline-none"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button className="bg-transparent border border-[#e2e8f0] rounded-full py-1.5 px-4 font-semibold text-xs flex items-center gap-1.5 hover:border-primary hover:text-primary">
               <FontAwesomeIcon icon={faFileExport} /> Export
             </button>
-            <Link href="/jobs/new" className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 hover:bg-primary-dark">
+            <Link
+              href="/jobs/new"
+              className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 hover:bg-primary-dark"
+            >
               <FontAwesomeIcon icon={faPlus} /> New Session
             </Link>
             <button className="relative p-1.5 px-2 rounded-xl text-[#475569] text-lg border border-[#e2e8f0] hover:border-primary hover:text-primary">
@@ -301,13 +346,20 @@ export default function ShortlistPage() {
             </button>
             <div className="flex items-center gap-2 ml-0.5 py-1 pl-1.5 pr-3 rounded-full bg-white border border-[#e2e8f0]">
               <div className="w-[34px] h-[34px] rounded-full border-2 border-primary-light overflow-hidden">
-                <img src="https://avatars.githubusercontent.com/u/96030189?v=4" alt="Elvis Chege" className="w-full h-full object-cover" />
+                <img
+                  src="https://avatars.githubusercontent.com/u/96030189?v=4"
+                  alt="Elvis Chege"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-xs">Elvis Chege</span>
                 <span className="text-[10px] text-[#475569]">Recruiter</span>
               </div>
-              <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-[#94a3b8]" />
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className="text-[10px] text-[#94a3b8]"
+              />
             </div>
           </div>
         </header>
@@ -317,15 +369,26 @@ export default function ShortlistPage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="text-sm mb-1">
-                <Link href="/sessions" className="text-[#2563eb] hover:underline font-medium">Sessions</Link>
+                <Link
+                  href="/sessions"
+                  className="text-[#2563eb] hover:underline font-medium"
+                >
+                  Sessions
+                </Link>
                 <span className="text-[#94a3b8] mx-1.5">/</span>
-                <span className="text-[#475569]">{job?.title || "Loading..."}</span>
+                <span className="text-[#475569]">
+                  {job?.title || "Loading..."}
+                </span>
                 <span className="text-[#94a3b8] mx-1.5">/</span>
                 <span className="font-semibold text-[#0f172a]">Shortlist</span>
               </div>
-              <h1 className="font-bold text-[28px] text-[#0f172a] tracking-tight">Ranked Shortlist</h1>
+              <h1 className="font-bold text-[28px] text-[#0f172a] tracking-tight">
+                Ranked Shortlist
+              </h1>
               <p className="text-sm text-[#64748b] mt-1">
-                {candidates.length} candidates · Screened {new Date().toLocaleDateString()} · Rubric confirmed before screening
+                {candidates.length} candidates · Screened{" "}
+                {new Date().toLocaleDateString()} · Rubric confirmed before
+                screening
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -338,7 +401,7 @@ export default function ShortlistPage() {
           {/* Filter Bar */}
           <div className="flex flex-wrap items-center justify-between mb-5">
             <div className="flex items-center gap-4">
-              {["all", "high", "flagged", "low"].map(filter => (
+              {["all", "high", "flagged", "low"].map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setCurrentFilter(filter)}
@@ -353,13 +416,19 @@ export default function ShortlistPage() {
                   {filter === "flagged" && "Flagged"}
                   {filter === "low" && "Low Confidence"}
                   {filter === "all" && ` (${candidates.length})`}
-                  {filter === "high" && ` (${candidates.filter(c => c.category === "high").length})`}
-                  {filter === "flagged" && ` (${candidates.filter(c => c.flags.length > 0).length})`}
-                  {filter === "low" && ` (${candidates.filter(c => c.category === "low").length})`}
+                  {filter === "high" &&
+                    ` (${candidates.filter((c) => c.category === "high").length})`}
+                  {filter === "flagged" &&
+                    ` (${candidates.filter((c) => c.flags.length > 0).length})`}
+                  {filter === "low" &&
+                    ` (${candidates.filter((c) => c.category === "low").length})`}
                 </button>
               ))}
               <div className="h-6 w-px bg-[#e2e8f0] mx-1"></div>
-              <button onClick={resetToAIRanks} className="text-xs font-medium text-[#64748b] hover:text-[#2563eb] flex items-center gap-1.5">
+              <button
+                onClick={resetToAIRanks}
+                className="text-xs font-medium text-[#64748b] hover:text-[#2563eb] flex items-center gap-1.5"
+              >
                 <FontAwesomeIcon icon={faUndoAlt} /> Reset to AI Ranks
               </button>
             </div>
@@ -395,26 +464,58 @@ export default function ShortlistPage() {
             </div>
 
             <div ref={tableBodyRef} className="divide-y divide-[#f1f5f9]">
-              {filteredCandidates.map(cand => {
-                const candidateIdx = candidates.findIndex(c => c.id === cand.id);
+              {filteredCandidates.map((cand) => {
+                const candidateIdx = candidates.findIndex(
+                  (c) => c.id === cand.id,
+                );
                 const aiRank = cand.aiRank;
                 const recRank = recruiterRanks[candidateIdx];
                 const isEdited = aiRank !== recRank;
-                const scoreColor = cand.composite >= 80 ? "#10b981" : cand.composite >= 60 ? "#f59e0b" : "#ef4444";
-                const avatarBg = cand.composite >= 80 ? "#dcfce7" : cand.composite >= 60 ? "#fef3c7" : "#fee2e2";
-                const avatarText = cand.composite >= 80 ? "#166534" : cand.composite >= 60 ? "#92400e" : "#991b1b";
-                const initials = cand.name.split(" ").map(n => n[0]).join("");
+                const scoreColor =
+                  cand.composite >= 80
+                    ? "#10b981"
+                    : cand.composite >= 60
+                      ? "#f59e0b"
+                      : "#ef4444";
+                const avatarBg =
+                  cand.composite >= 80
+                    ? "#dcfce7"
+                    : cand.composite >= 60
+                      ? "#fef3c7"
+                      : "#fee2e2";
+                const avatarText =
+                  cand.composite >= 80
+                    ? "#166534"
+                    : cand.composite >= 60
+                      ? "#92400e"
+                      : "#991b1b";
+                const initials = cand.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("");
 
                 return (
                   <div key={cand.id}>
-                    <div className="shortlist-row grid grid-cols-[auto_auto_auto_1fr_auto] gap-3 px-5 py-4 items-center" data-id={cand.id}>
+                    <div
+                      className="shortlist-row grid grid-cols-[auto_auto_auto_1fr_auto] gap-3 px-5 py-4 items-center"
+                      data-id={cand.id}
+                    >
                       <div className="drag-handle w-10 flex justify-center cursor-grab text-[#94a3b8]">
                         <FontAwesomeIcon icon={faGripVertical} />
                       </div>
-                      <div className="w-8 text-center font-bold text-sm text-[#475569]">{aiRank}</div>
-                      <div className={`w-8 text-center font-bold text-sm ${isEdited ? "text-[#2563eb]" : ""}`}>
+                      <div className="w-8 text-center font-bold text-sm text-[#475569]">
+                        {aiRank}
+                      </div>
+                      <div
+                        className={`w-8 text-center font-bold text-sm ${isEdited ? "text-[#2563eb]" : ""}`}
+                      >
                         {recRank}
-                        {isEdited && <FontAwesomeIcon icon={faPencilAlt} className="ml-1 text-[10px] text-[#2563eb] opacity-70" />}
+                        {isEdited && (
+                          <FontAwesomeIcon
+                            icon={faPencilAlt}
+                            className="ml-1 text-[10px] text-[#2563eb] opacity-70"
+                          />
+                        )}
                       </div>
                       <div className="flex items-center gap-4">
                         <input
@@ -423,23 +524,38 @@ export default function ShortlistPage() {
                           checked={selectedIds.has(cand.id)}
                           onChange={() => toggleCandidateSelection(cand.id)}
                         />
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ background: avatarBg, color: avatarText }}>
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
+                          style={{ background: avatarBg, color: avatarText }}
+                        >
                           {initials}
                         </div>
                         <div>
                           <div className="font-bold text-[#0f172a]">
-                            {cand.name} <span className="text-[#64748b] text-xs font-normal ml-1">{cand.role}</span>
+                            {cand.name}{" "}
+                            <span className="text-[#64748b] text-xs font-normal ml-1">
+                              {cand.role}
+                            </span>
                           </div>
-                          <div className="text-xs text-[#64748b]">{cand.exp} · {cand.skills}</div>
+                          <div className="text-xs text-[#64748b]">
+                            {cand.exp} · {cand.skills}
+                          </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {cand.flags.map(flag => {
+                            {cand.flags.map((flag) => {
                               let colorClass = "bg-red-100 text-red-800";
-                              if (flag === "Overqualified") colorClass = "bg-orange-100 text-orange-800";
-                              if (flag === "SkillMismatch") colorClass = "bg-amber-100 text-amber-800";
-                              if (flag === "Underexperienced") colorClass = "bg-gray-100 text-gray-800";
-                              if (flag === "Low Confidence") colorClass = "bg-yellow-50 text-yellow-700";
+                              if (flag === "Overqualified")
+                                colorClass = "bg-orange-100 text-orange-800";
+                              if (flag === "SkillMismatch")
+                                colorClass = "bg-amber-100 text-amber-800";
+                              if (flag === "Underexperienced")
+                                colorClass = "bg-gray-100 text-gray-800";
+                              if (flag === "Low Confidence")
+                                colorClass = "bg-yellow-50 text-yellow-700";
                               return (
-                                <span key={flag} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colorClass}`}>
+                                <span
+                                  key={flag}
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colorClass}`}
+                                >
                                   {flag}
                                 </span>
                               );
@@ -450,10 +566,16 @@ export default function ShortlistPage() {
                       <div className="flex items-center gap-2 pr-4">
                         <div className="flex-1 min-w-[120px]">
                           <div className="flex items-center gap-1 text-[9px] font-bold text-[#64748b] uppercase tracking-wider mb-0.5">
-                            <span className="w-6">T</span><span className="w-6">E</span><span className="w-6">Ed</span><span className="w-6">P</span><span className="w-6">F</span>
+                            <span className="w-6">T</span>
+                            <span className="w-6">E</span>
+                            <span className="w-6">Ed</span>
+                            <span className="w-6">P</span>
+                            <span className="w-6">F</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            {(["tech", "exp", "edu", "prof", "flags"] as const).map(dim => {
+                            {(
+                              ["tech", "exp", "edu", "prof", "flags"] as const
+                            ).map((dim) => {
                               const val = cand.scores[dim];
                               let bgClass = "";
                               if (dim === "tech") bgClass = "bg-[#2563eb]";
@@ -462,21 +584,35 @@ export default function ShortlistPage() {
                               else if (dim === "prof") bgClass = "bg-[#7c3aed]";
                               else bgClass = "bg-[#dc2626]";
                               return (
-                                <div key={dim} className="w-6 h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden">
-                                  <div className={`h-full ${bgClass}`} style={{ width: `${val}%` }}></div>
+                                <div
+                                  key={dim}
+                                  className="w-6 h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden"
+                                >
+                                  <div
+                                    className={`h-full ${bgClass}`}
+                                    style={{ width: `${val}%` }}
+                                  ></div>
                                 </div>
                               );
                             })}
                           </div>
                         </div>
                         <div className="text-right ml-2">
-                          <span className="text-2xl font-black" style={{ color: scoreColor }}>{cand.composite}</span>
-                          <span className="text-[10px] text-[#94a3b8] block">/100</span>
+                          <span
+                            className="text-2xl font-black"
+                            style={{ color: scoreColor }}
+                          >
+                            {cand.composite}
+                          </span>
+                          <span className="text-[10px] text-[#94a3b8] block">
+                            /100
+                          </span>
                         </div>
                         <button
                           className="expand-row-btn ml-2 text-[#94a3b8] hover:text-[#2563eb]"
                           onClick={(e) => {
-                            const row = e.currentTarget.closest(".shortlist-row");
+                            const row =
+                              e.currentTarget.closest(".shortlist-row");
                             const next = row?.nextElementSibling;
                             if (next?.classList.contains("expanded-content")) {
                               next.classList.toggle("hidden");
@@ -492,17 +628,35 @@ export default function ShortlistPage() {
                     {/* Expanded Content */}
                     <div className="expanded-content hidden bg-[#fafbff] px-5 py-4 border-t border-[#e2e8f0] text-sm">
                       <div className="grid grid-cols-5 gap-4 mb-4">
-                        {["Technical", "Experience", "Education", "Profile", "Red Flags"].map((dimName, i) => {
-                          const dimKey = ["tech", "exp", "edu", "prof", "flags"][i] as keyof typeof cand.scores;
+                        {[
+                          "Technical",
+                          "Experience",
+                          "Education",
+                          "Profile",
+                          "Red Flags",
+                        ].map((dimName, i) => {
+                          const dimKey = [
+                            "tech",
+                            "exp",
+                            "edu",
+                            "prof",
+                            "flags",
+                          ][i] as keyof typeof cand.scores;
                           const score = cand.scores[dimKey];
                           return (
                             <div key={dimName}>
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-xl">{score}</span>
-                                <span className="text-xs text-[#64748b]">{dimName}</span>
+                                <span className="font-bold text-xl">
+                                  {score}
+                                </span>
+                                <span className="text-xs text-[#64748b]">
+                                  {dimName}
+                                </span>
                               </div>
                               <p className="text-xs text-[#475569] mt-1">
-                                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">✦ AI</span>
+                                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">
+                                  ✦ AI
+                                </span>
                                 {cand.rationales[i]}
                               </p>
                             </div>
@@ -511,33 +665,52 @@ export default function ShortlistPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <div className="font-bold text-green-700 text-xs mb-1">Strengths</div>
+                          <div className="font-bold text-green-700 text-xs mb-1">
+                            Strengths
+                          </div>
                           {cand.strengths.map((s, i) => (
-                            <div key={i} className="text-xs flex gap-2 items-start">
-                              <FontAwesomeIcon icon={faCheckCircle} className="text-green-600 text-xs mt-0.5" />
+                            <div
+                              key={i}
+                              className="text-xs flex gap-2 items-start"
+                            >
+                              <FontAwesomeIcon
+                                icon={faCheckCircle}
+                                className="text-green-600 text-xs mt-0.5"
+                              />
                               <span>{s}</span>
                             </div>
                           ))}
                         </div>
                         <div>
-                          <div className="font-bold text-red-600 text-xs mb-1">Gaps/Risks</div>
+                          <div className="font-bold text-red-600 text-xs mb-1">
+                            Gaps/Risks
+                          </div>
                           {cand.gaps.map((g, i) => (
-                            <div key={i} className="text-xs flex gap-2 items-start">
-                              <FontAwesomeIcon icon={faExclamationCircle} className="text-red-500 text-xs mt-0.5" />
+                            <div
+                              key={i}
+                              className="text-xs flex gap-2 items-start"
+                            >
+                              <FontAwesomeIcon
+                                icon={faExclamationCircle}
+                                className="text-red-500 text-xs mt-0.5"
+                              />
                               <span>{g}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                       <div className="mt-3 bg-white p-3 rounded-xl border flex items-start gap-2">
-                        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">✦ AI</span>
+                        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          ✦ AI
+                        </span>
                         <span className="text-sm">{cand.aiRec}</span>
                       </div>
                       <button
                         onClick={() => setDetailPanelCandidate(cand)}
                         className="mt-3 text-primary font-medium text-sm flex items-center gap-1"
                       >
-                        <FontAwesomeIcon icon={faArrowRight} /> Open full detail panel →
+                        <FontAwesomeIcon icon={faArrowRight} /> Open full detail
+                        panel →
                       </button>
                     </div>
                   </div>
@@ -551,11 +724,17 @@ export default function ShortlistPage() {
       {/* Detail Panel */}
       {detailPanelCandidate && (
         <>
-          <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setDetailPanelCandidate(null)} />
+          <div
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={() => setDetailPanelCandidate(null)}
+          />
           <div className="fixed top-0 right-0 w-[400px] h-full bg-white border-l border-[#e2e8f0] z-50 shadow-xl transform transition-transform duration-300 translate-x-0">
             <div className="p-5 border-b flex items-center justify-between">
               <h3 className="font-bold text-lg">Candidate Details</h3>
-              <button onClick={() => setDetailPanelCandidate(null)} className="w-8 h-8 rounded-full border flex items-center justify-center">
+              <button
+                onClick={() => setDetailPanelCandidate(null)}
+                className="w-8 h-8 rounded-full border flex items-center justify-center"
+              >
                 <FontAwesomeIcon icon={faTimes} />
               </button>
             </div>
@@ -568,11 +747,20 @@ export default function ShortlistPage() {
 
       {/* Compare Modal */}
       {compareModalOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setCompareModalOpen(false)}>
-          <div className="bg-white rounded-2xl w-[95%] max-w-6xl max-h-[90vh] overflow-auto p-6" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center"
+          onClick={() => setCompareModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-[95%] max-w-6xl max-h-[90vh] overflow-auto p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-xl">Compare Candidates</h3>
-              <button onClick={() => setCompareModalOpen(false)} className="text-[#94a3b8] hover:text-black">
+              <button
+                onClick={() => setCompareModalOpen(false)}
+                className="text-[#94a3b8] hover:text-black"
+              >
                 <FontAwesomeIcon icon={faTimes} className="text-xl" />
               </button>
             </div>
@@ -593,34 +781,54 @@ export default function ShortlistPage() {
 
 // Detail Panel Content Component
 function DetailPanelContent({ candidate }: { candidate: CandidateDisplay }) {
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "ai"; content: string }[]>([]);
+  const [chatMessages, setChatMessages] = useState<
+    { role: "user" | "ai"; content: string }[]
+  >([]);
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
 
   const handleSend = async (question: string) => {
     if (!question.trim()) return;
-    setChatMessages(prev => [...prev, { role: "user", content: question }]);
+    setChatMessages((prev) => [...prev, { role: "user", content: question }]);
     setChatInput("");
     setIsStreaming(true);
 
     // Simulate streaming response (in production, call API)
     setTimeout(() => {
       let response = `Based on ${candidate.name}'s profile: ${candidate.aiRec.substring(0, 60)}...`;
-      if (question.toLowerCase().includes("risk")) response = `Biggest risk: ${candidate.gaps[0]}. However strengths in ${candidate.strengths[0].toLowerCase()} mitigate.`;
-      else if (question.toLowerCase().includes("rank")) response = `${candidate.name} ranked #${candidate.aiRank} due to composite score and technical alignment.`;
-      setChatMessages(prev => [...prev, { role: "ai", content: response }]);
+      if (question.toLowerCase().includes("risk"))
+        response = `Biggest risk: ${candidate.gaps[0]}. However strengths in ${candidate.strengths[0].toLowerCase()} mitigate.`;
+      else if (question.toLowerCase().includes("rank"))
+        response = `${candidate.name} ranked #${candidate.aiRank} due to composite score and technical alignment.`;
+      setChatMessages((prev) => [...prev, { role: "ai", content: response }]);
       setIsStreaming(false);
     }, 1200);
   };
 
-  const initials = candidate.name.split(" ").map(n => n[0]).join("");
-  const avatarBg = candidate.composite >= 80 ? "#dcfce7" : candidate.composite >= 60 ? "#fef3c7" : "#fee2e2";
-  const avatarText = candidate.composite >= 80 ? "#166534" : candidate.composite >= 60 ? "#92400e" : "#991b1b";
+  const initials = candidate.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
+  const avatarBg =
+    candidate.composite >= 80
+      ? "#dcfce7"
+      : candidate.composite >= 60
+        ? "#fef3c7"
+        : "#fee2e2";
+  const avatarText =
+    candidate.composite >= 80
+      ? "#166534"
+      : candidate.composite >= 60
+        ? "#92400e"
+        : "#991b1b";
 
   return (
     <>
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold" style={{ background: avatarBg, color: avatarText }}>
+        <div
+          className="w-12 h-12 rounded-full flex items-center justify-center font-bold"
+          style={{ background: avatarBg, color: avatarText }}
+        >
           {initials}
         </div>
         <div>
@@ -629,18 +837,41 @@ function DetailPanelContent({ candidate }: { candidate: CandidateDisplay }) {
         </div>
       </div>
       <div className="space-y-3">
-        {(["Technical", "Experience", "Education", "Profile", "Red Flags"] as const).map((dimName, i) => {
-          const dimKey = ["tech", "exp", "edu", "prof", "flags"][i] as keyof typeof candidate.scores;
+        {(
+          [
+            "Technical",
+            "Experience",
+            "Education",
+            "Profile",
+            "Red Flags",
+          ] as const
+        ).map((dimName, i) => {
+          const dimKey = ["tech", "exp", "edu", "prof", "flags"][
+            i
+          ] as keyof typeof candidate.scores;
           const score = candidate.scores[dimKey];
-          const colors = ["#2563eb", "#16a34a", "#d97706", "#7c3aed", "#dc2626"];
+          const colors = [
+            "#2563eb",
+            "#16a34a",
+            "#d97706",
+            "#7c3aed",
+            "#dc2626",
+          ];
           return (
             <div key={dimName} className="border rounded-xl p-3">
               <div className="flex justify-between items-center">
                 <span className="font-bold">{dimName}</span>
-                <span className="text-xl font-black" style={{ color: colors[i] }}>{score}</span>
+                <span
+                  className="text-xl font-black"
+                  style={{ color: colors[i] }}
+                >
+                  {score}
+                </span>
               </div>
               <p className="text-xs text-[#475569] mt-1">
-                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">✦ AI</span>
+                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">
+                  ✦ AI
+                </span>
                 {candidate.rationales[i]}
               </p>
             </div>
@@ -650,28 +881,48 @@ function DetailPanelContent({ candidate }: { candidate: CandidateDisplay }) {
       <div className="mt-4">
         <div className="font-bold text-green-700">Strengths</div>
         {candidate.strengths.map((s, i) => (
-          <div key={i} className="text-sm flex gap-2"><FontAwesomeIcon icon={faCheckCircle} className="text-green-600" />{s}</div>
+          <div key={i} className="text-sm flex gap-2">
+            <FontAwesomeIcon icon={faCheckCircle} className="text-green-600" />
+            {s}
+          </div>
         ))}
       </div>
       <div className="mt-3">
         <div className="font-bold text-red-600">Gaps</div>
         {candidate.gaps.map((g, i) => (
-          <div key={i} className="text-sm flex gap-2"><FontAwesomeIcon icon={faExclamationCircle} className="text-red-500" />{g}</div>
+          <div key={i} className="text-sm flex gap-2">
+            <FontAwesomeIcon
+              icon={faExclamationCircle}
+              className="text-red-500"
+            />
+            {g}
+          </div>
         ))}
       </div>
       <div className="mt-3">
-        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">✦ AI</span>
+        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
+          ✦ AI
+        </span>
         <span className="text-sm ml-1">{candidate.aiRec}</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
-        {candidate.flags.map(flag => (
-          <span key={flag} className="text-xs bg-gray-100 px-2 py-1 rounded-full">{flag}</span>
+        {candidate.flags.map((flag) => (
+          <span
+            key={flag}
+            className="text-xs bg-gray-100 px-2 py-1 rounded-full"
+          >
+            {flag}
+          </span>
         ))}
       </div>
       <div className="mt-6 border-t pt-4">
         <div className="font-bold text-sm mb-2">Ask about this candidate</div>
         <div className="flex flex-wrap gap-2 mb-3">
-          {["What is the biggest hire risk?", "Why ranked above candidate 3?", "One sentence for the hiring manager"].map(q => (
+          {[
+            "What is the biggest hire risk?",
+            "Why ranked above candidate 3?",
+            "One sentence for the hiring manager",
+          ].map((q) => (
             <span
               key={q}
               onClick={() => handleSend(q)}
@@ -683,14 +934,23 @@ function DetailPanelContent({ candidate }: { candidate: CandidateDisplay }) {
         </div>
         <div className="space-y-2 max-h-48 overflow-auto custom-scrollbar mb-2">
           {chatMessages.map((msg, i) => (
-            <div key={i} className={`text-sm p-2 rounded-xl max-w-[90%] ${msg.role === "ai" ? "bg-[#f8fafc] border self-start" : "bg-primary text-white self-end ml-auto"}`}>
-              {msg.role === "ai" && <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">✦ AI</span>}
+            <div
+              key={i}
+              className={`text-sm p-2 rounded-xl max-w-[90%] ${msg.role === "ai" ? "bg-[#f8fafc] border self-start" : "bg-primary text-white self-end ml-auto"}`}
+            >
+              {msg.role === "ai" && (
+                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">
+                  ✦ AI
+                </span>
+              )}
               {msg.content}
             </div>
           ))}
           {isStreaming && (
             <div className="text-sm p-2 bg-[#f8fafc] border rounded-xl self-start">
-              <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">✦ AI</span>
+              <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">
+                ✦ AI
+              </span>
               <span className="animate-pulse">...</span>
             </div>
           )}
@@ -698,12 +958,15 @@ function DetailPanelContent({ candidate }: { candidate: CandidateDisplay }) {
         <div className="flex gap-2">
           <input
             value={chatInput}
-            onChange={e => setChatInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && handleSend(chatInput)}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend(chatInput)}
             placeholder="Ask a question..."
             className="flex-1 border rounded-full px-4 py-2 text-sm"
           />
-          <button onClick={() => handleSend(chatInput)} className="bg-primary text-white w-10 h-10 rounded-full">
+          <button
+            onClick={() => handleSend(chatInput)}
+            className="bg-primary text-white w-10 h-10 rounded-full"
+          >
             <FontAwesomeIcon icon={faPaperPlane} />
           </button>
         </div>
@@ -719,26 +982,37 @@ function CompareContent({ candidates }: { candidates: CandidateDisplay[] }) {
 
   return (
     <>
-      <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${candidates.length + 1}, 1fr)` }}>
+      <div
+        className={`grid gap-4`}
+        style={{ gridTemplateColumns: `repeat(${candidates.length + 1}, 1fr)` }}
+      >
         <div className="font-bold"></div>
-        {candidates.map(c => (
+        {candidates.map((c) => (
           <div key={c.id} className="font-bold text-lg">
-            {c.name}<br />
+            {c.name}
+            <br />
             <span className="text-sm font-normal">{c.composite}/100</span>
           </div>
         ))}
         {keys.map((key, idx) => {
-          const scores = candidates.map(c => c.scores[key]);
+          const scores = candidates.map((c) => c.scores[key]);
           const maxScore = Math.max(...scores);
           return (
             <>
-              <div key={`dim-${idx}`} className="font-medium py-2">{dims[idx]}</div>
-              {candidates.map(c => {
+              <div key={`dim-${idx}`} className="font-medium py-2">
+                {dims[idx]}
+              </div>
+              {candidates.map((c) => {
                 const isWinner = c.scores[key] === maxScore;
                 return (
-                  <div key={`${c.id}-${idx}`} className={`py-2 ${isWinner ? "bg-[#f0fdf4]" : ""} px-2 rounded`}>
+                  <div
+                    key={`${c.id}-${idx}`}
+                    className={`py-2 ${isWinner ? "bg-[#f0fdf4]" : ""} px-2 rounded`}
+                  >
                     {c.scores[key]}
-                    <span className="text-xs text-[#64748b] block">{c.rationales[idx]}</span>
+                    <span className="text-xs text-[#64748b] block">
+                      {c.rationales[idx]}
+                    </span>
                   </div>
                 );
               })}
@@ -747,17 +1021,26 @@ function CompareContent({ candidates }: { candidates: CandidateDisplay[] }) {
         })}
       </div>
       <div className="mt-6 p-4 bg-[#f8fafc] rounded-xl">
-        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">✦ AI</span>
+        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
+          ✦ AI
+        </span>
         <p className="text-sm">
-          Head-to-head: {candidates.map(c => c.name).join(" vs ")}. {candidates[0].name} leads in technical depth, while {candidates.length > 1 ? candidates[1].name : ""} shows broader experience. Overall, {candidates[0].name} is the stronger match.
+          Head-to-head: {candidates.map((c) => c.name).join(" vs ")}.{" "}
+          {candidates[0].name} leads in technical depth, while{" "}
+          {candidates.length > 1 ? candidates[1].name : ""} shows broader
+          experience. Overall, {candidates[0].name} is the stronger match.
         </p>
       </div>
       <div className="mt-4 p-4 border border-green-200 bg-green-50/30 rounded-xl">
-        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">✦ AI</span>
-        <span className="font-bold"> Recommendation:</span> Prioritize {candidates[0].name}. {candidates[0].aiRec}
+        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
+          ✦ AI
+        </span>
+        <span className="font-bold"> Recommendation:</span> Prioritize{" "}
+        {candidates[0].name}. {candidates[0].aiRec}
       </div>
       <button className="mt-4 bg-primary text-white py-2 px-5 rounded-full text-sm">
-        <FontAwesomeIcon icon={faFileExport} className="mr-1" /> Add to session notes
+        <FontAwesomeIcon icon={faFileExport} className="mr-1" /> Add to session
+        notes
       </button>
     </>
   );

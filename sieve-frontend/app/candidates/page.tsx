@@ -131,7 +131,9 @@ export default function CandidatesPage() {
         (c) =>
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           c.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.skills.some((s) => s.toLowerCase().includes(searchTerm.toLowerCase()))
+          c.skills.some((s) =>
+            s.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
       );
     }
     if (statusFilter !== "all") {
@@ -153,7 +155,11 @@ export default function CandidatesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
-        <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          className="text-4xl text-primary"
+        />
       </div>
     );
   }
@@ -162,7 +168,9 @@ export default function CandidatesPage() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-[28px] font-bold text-[#0f172a]">Candidates</h1>
-        <p className="text-sm text-[#64748b] mt-1">Manage and review all candidates in your talent pool</p>
+        <p className="text-sm text-[#64748b] mt-1">
+          Manage and review all candidates in your talent pool
+        </p>
       </div>
 
       {/* Filters */}
@@ -197,51 +205,83 @@ export default function CandidatesPage() {
       <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <FontAwesomeIcon icon={faUserGroup} className="text-4xl text-[#cbd5e1] mb-3" />
+            <FontAwesomeIcon
+              icon={faUserGroup}
+              className="text-4xl text-[#cbd5e1] mb-3"
+            />
             <p className="text-[#64748b]">No candidates found</p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#e2e8f0] bg-[#f8fafc]">
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Candidate</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Role</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Location</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Experience</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Status</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Applied</th>
-                <th className="text-right py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Action</th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Candidate
+                </th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Role
+                </th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Location
+                </th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Experience
+                </th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Status
+                </th>
+                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Applied
+                </th>
+                <th className="text-right py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((candidate) => (
-                <tr key={candidate.id} className="border-b border-[#f1f5f9] hover:bg-[#fafbff] transition">
+                <tr
+                  key={candidate.id}
+                  className="border-b border-[#f1f5f9] hover:bg-[#fafbff] transition"
+                >
                   <td className="py-4 px-5">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
                         {candidate.avatar}
                       </div>
-                      <span className="font-medium text-[#0f172a]">{candidate.name}</span>
+                      <span className="font-medium text-[#0f172a]">
+                        {candidate.name}
+                      </span>
                     </div>
                   </td>
                   <td className="py-4 px-5 text-[#475569]">{candidate.role}</td>
                   <td className="py-4 px-5 text-[#475569]">
-                    <FontAwesomeIcon icon={faMapPin} className="text-[10px] mr-1 text-[#94a3b8]" />
+                    <FontAwesomeIcon
+                      icon={faMapPin}
+                      className="text-[10px] mr-1 text-[#94a3b8]"
+                    />
                     {candidate.location}
                   </td>
-                  <td className="py-4 px-5 text-[#475569]">{candidate.experience}</td>
+                  <td className="py-4 px-5 text-[#475569]">
+                    {candidate.experience}
+                  </td>
                   <td className="py-4 px-5">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(candidate.status)}`}>
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(candidate.status)}`}
+                    >
                       {candidate.status}
                     </span>
                   </td>
-                  <td className="py-4 px-5 text-[#475569]">{candidate.appliedDate}</td>
+                  <td className="py-4 px-5 text-[#475569]">
+                    {candidate.appliedDate}
+                  </td>
                   <td className="py-4 px-5 text-right">
                     <Link
                       href={`/candidates/${candidate.id}`}
                       className="text-primary font-medium text-xs hover:underline inline-flex items-center gap-1"
                     >
-                      <FontAwesomeIcon icon={faEye} className="text-[10px]" /> View
+                      <FontAwesomeIcon icon={faEye} className="text-[10px]" />{" "}
+                      View
                     </Link>
                   </td>
                 </tr>

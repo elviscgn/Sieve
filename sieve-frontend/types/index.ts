@@ -1,17 +1,17 @@
-// Umurava Talent Profile 
+// Umurava Talent Profile
 export interface UmuravaProfile {
   "First Name": string;
   "Last Name": string;
-  "Email": string;
-  "Phone": string;
-  "Location": string;
-  "Summary": string;
-  "Skills": Skill[];
+  Email: string;
+  Phone: string;
+  Location: string;
+  Summary: string;
+  Skills: Skill[];
   "Work Experience": WorkExperience[];
-  "Education": Education[];
-  "Languages": Language[];
-  "Certifications": Certification[];
-  "Projects": Project[];
+  Education: Education[];
+  Languages: Language[];
+  Certifications: Certification[];
+  Projects: Project[];
 }
 
 export interface Skill {
@@ -21,15 +21,15 @@ export interface Skill {
 
 export interface WorkExperience {
   "Job Title": string;
-  "Company": string;
+  Company: string;
   "Start Date": string;
   "End Date": string;
-  "Description": string;
+  Description: string;
 }
 
 export interface Education {
-  "Degree": string;
-  "Institution": string;
+  Degree: string;
+  Institution: string;
   "Start Date": string;
   "End Date": string;
 }

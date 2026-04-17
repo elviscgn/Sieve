@@ -1,4 +1,9 @@
-type FlagType = "Overqualified" | "Underexperienced" | "SkillMismatch" | "Low Confidence" | "CareerGap";
+type FlagType =
+  | "Overqualified"
+  | "Underexperienced"
+  | "SkillMismatch"
+  | "Low Confidence"
+  | "CareerGap";
 
 const flagStyles: Record<FlagType, string> = {
   Overqualified: "bg-[#fff7ed] text-[#c2410c] border-[#fed7aa]",
@@ -10,7 +15,9 @@ const flagStyles: Record<FlagType, string> = {
 
 export default function FlagTag({ flag }: { flag: FlagType }) {
   return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${flagStyles[flag]}`}>
+    <span
+      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${flagStyles[flag]}`}
+    >
       {flag}
     </span>
   );

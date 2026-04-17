@@ -49,7 +49,8 @@ export interface IntelligencePreview {
 
 // Mock API service
 class MockDataService {
-  private delay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, ms));
+  private delay = (ms: number = 300) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   async getStats(): Promise<DashboardStats> {
     await this.delay();
@@ -98,15 +99,58 @@ class MockDataService {
   async getCandidates(): Promise<CandidateRow[]> {
     await this.delay();
     return [
-      { id: "CAND-101", name: "Thabo Ndlovu", role: "Frontend Lead", level: "Senior", aiScore: 92, date: "Mar 12", status: "Active" },
-      { id: "CAND-102", name: "Lerato Khumalo", role: "Product Designer", level: "Mid", aiScore: 74, date: "Mar 14", status: "Pending" },
-      { id: "CAND-103", name: "Sipho Mahlangu", role: "Backend Engineer", level: "Senior", aiScore: 88, date: "Mar 10", status: "Active" },
-      { id: "CAND-104", name: "Naledi Molefe", role: "Data Analyst", level: "Junior", aiScore: 51, date: "Mar 16", status: "Rejected" },
-      { id: "CAND-105", name: "Kagiso Modise", role: "DevOps", level: "Lead", aiScore: 95, date: "Mar 18", status: "Active" },
+      {
+        id: "CAND-101",
+        name: "Thabo Ndlovu",
+        role: "Frontend Lead",
+        level: "Senior",
+        aiScore: 92,
+        date: "Mar 12",
+        status: "Active",
+      },
+      {
+        id: "CAND-102",
+        name: "Lerato Khumalo",
+        role: "Product Designer",
+        level: "Mid",
+        aiScore: 74,
+        date: "Mar 14",
+        status: "Pending",
+      },
+      {
+        id: "CAND-103",
+        name: "Sipho Mahlangu",
+        role: "Backend Engineer",
+        level: "Senior",
+        aiScore: 88,
+        date: "Mar 10",
+        status: "Active",
+      },
+      {
+        id: "CAND-104",
+        name: "Naledi Molefe",
+        role: "Data Analyst",
+        level: "Junior",
+        aiScore: 51,
+        date: "Mar 16",
+        status: "Rejected",
+      },
+      {
+        id: "CAND-105",
+        name: "Kagiso Modise",
+        role: "DevOps",
+        level: "Lead",
+        aiScore: 95,
+        date: "Mar 18",
+        status: "Active",
+      },
     ];
   }
 
-  async getTodaySchedule(): Promise<{ pending: ScheduleEvent[]; completed: ScheduleEvent[] }> {
+  async getTodaySchedule(): Promise<{
+    pending: ScheduleEvent[];
+    completed: ScheduleEvent[];
+  }> {
     await this.delay();
     return {
       pending: [
@@ -193,11 +237,15 @@ class MockDataService {
     return {
       matchRateTrend: 12,
       topSkillGaps: ["React", "Node.js", "AWS"],
-      insight: "Full Stack roles show 34% lower match rates due to React experience gap",
+      insight:
+        "Full Stack roles show 34% lower match rates due to React experience gap",
     };
   }
 
-  async getApplicantJobsTrend(): Promise<{ percentage: number; isUp: boolean }> {
+  async getApplicantJobsTrend(): Promise<{
+    percentage: number;
+    isUp: boolean;
+  }> {
     await this.delay();
     return { percentage: 9.42, isUp: true };
   }

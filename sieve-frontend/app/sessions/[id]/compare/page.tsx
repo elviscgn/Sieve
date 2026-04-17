@@ -35,7 +35,10 @@ import {
   faCircleInfo,
   faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
-import { faBell as farBell, faCalendar as farCalendar } from "@fortawesome/free-regular-svg-icons";
+import {
+  faBell as farBell,
+  faCalendar as farCalendar,
+} from "@fortawesome/free-regular-svg-icons";
 import { apiClient } from "@/lib/api";
 
 // Types
@@ -100,18 +103,23 @@ export default function ComparePage() {
         // Get selected candidate IDs from URL query params
         const searchParams = new URLSearchParams(window.location.search);
         const candidateIds = searchParams.get("ids")?.split(",") || [];
-        
+
         if (candidateIds.length < 2 || candidateIds.length > 3) {
           throw new Error("Please select 2-3 candidates to compare");
         }
 
-        const response = await apiClient.post<CompareResponse>(`/sessions/${sessionId}/compare`, {
-          candidates: candidateIds,
-        });
+        const response = await apiClient.post<CompareResponse>(
+          `/sessions/${sessionId}/compare`,
+          {
+            candidates: candidateIds,
+          },
+        );
         setData(response);
       } catch (err) {
         console.error("Comparison failed:", err);
-        setError(err instanceof Error ? err.message : "Failed to load comparison");
+        setError(
+          err instanceof Error ? err.message : "Failed to load comparison",
+        );
       } finally {
         setIsLoading(false);
       }
@@ -124,13 +132,23 @@ export default function ComparePage() {
     return (
       <div className="flex min-h-screen bg-[#f4f7fe] items-center justify-center">
         <div className="text-center max-w-md">
-          <FontAwesomeIcon icon={faSpinner} spin className="text-5xl text-primary mb-6" />
-          <h2 className="text-xl font-bold text-[#0f172a] mb-2">Generating AI Comparison</h2>
+          <FontAwesomeIcon
+            icon={faSpinner}
+            spin
+            className="text-5xl text-primary mb-6"
+          />
+          <h2 className="text-xl font-bold text-[#0f172a] mb-2">
+            Generating AI Comparison
+          </h2>
           <p className="text-sm text-[#64748b] mb-4">
-            Gemini is analyzing the selected candidates against the rubric. This may take up to a minute.
+            Gemini is analyzing the selected candidates against the rubric. This
+            may take up to a minute.
           </p>
           <div className="h-2 bg-[#e2e8f0] rounded-full overflow-hidden w-64 mx-auto">
-            <div className="h-full bg-primary rounded-full animate-[progress_5s_ease-in-out_infinite]" style={{ width: "60%" }} />
+            <div
+              className="h-full bg-primary rounded-full animate-[progress_5s_ease-in-out_infinite]"
+              style={{ width: "60%" }}
+            />
           </div>
           <p className="text-xs text-[#94a3b8] mt-4 flex items-center justify-center gap-1">
             <FontAwesomeIcon icon={faClock} /> Please wait...
@@ -145,8 +163,12 @@ export default function ComparePage() {
       <div className="flex min-h-screen bg-[#f4f7fe] items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-[#0f172a] mb-2">Could not load comparison</h2>
-          <p className="text-sm text-[#64748b] mb-4">{error || "Something went wrong"}</p>
+          <h2 className="text-xl font-bold text-[#0f172a] mb-2">
+            Could not load comparison
+          </h2>
+          <p className="text-sm text-[#64748b] mb-4">
+            {error || "Something went wrong"}
+          </p>
           <button
             onClick={() => router.back()}
             className="bg-primary text-white px-6 py-2 rounded-full font-semibold"
@@ -173,15 +195,24 @@ export default function ComparePage() {
               <FontAwesomeIcon icon={faBars} />
             </button>
             <div className="flex items-center bg-[#f8fafc] rounded-full pl-4 pr-1 py-1 border border-[#e2e8f0] min-w-[280px]">
-              <FontAwesomeIcon icon={faSearch} className="text-[#94a3b8] text-[13px]" />
-              <input placeholder="Search jobs, candidates..." className="border-0 bg-transparent py-1.5 px-2.5 text-[13px] w-full outline-none" />
+              <FontAwesomeIcon
+                icon={faSearch}
+                className="text-[#94a3b8] text-[13px]"
+              />
+              <input
+                placeholder="Search jobs, candidates..."
+                className="border-0 bg-transparent py-1.5 px-2.5 text-[13px] w-full outline-none"
+              />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button className="bg-transparent border border-[#e2e8f0] rounded-full py-1.5 px-4 font-semibold text-xs flex items-center gap-1.5 hover:border-primary hover:text-primary">
               <FontAwesomeIcon icon={faFileExport} /> Export
             </button>
-            <Link href="/jobs/new" className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 hover:bg-primary-dark">
+            <Link
+              href="/jobs/new"
+              className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 hover:bg-primary-dark"
+            >
               <FontAwesomeIcon icon={faPlus} /> New Session
             </Link>
             <button className="relative p-1.5 px-2 rounded-xl text-[#475569] text-lg border border-[#e2e8f0] hover:border-primary hover:text-primary">
@@ -190,13 +221,20 @@ export default function ComparePage() {
             </button>
             <div className="flex items-center gap-2 ml-0.5 py-1 pl-1.5 pr-3 rounded-full bg-white border border-[#e2e8f0]">
               <div className="w-[34px] h-[34px] rounded-full border-2 border-primary-light overflow-hidden">
-                <img src="https://avatars.githubusercontent.com/u/96030189?v=4" alt="Elvis Chege" className="w-full h-full object-cover" />
+                <img
+                  src="https://avatars.githubusercontent.com/u/96030189?v=4"
+                  alt="Elvis Chege"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-xs">Elvis Chege</span>
                 <span className="text-[10px] text-[#475569]">Recruiter</span>
               </div>
-              <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-[#94a3b8]" />
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className="text-[10px] text-[#94a3b8]"
+              />
             </div>
           </div>
         </header>
@@ -204,25 +242,35 @@ export default function ComparePage() {
         <div className="p-6 pb-8 overflow-y-auto flex-1">
           {/* Breadcrumb */}
           <div className="flex items-center justify-between mb-3">
-            <button onClick={() => router.back()} className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary transition-colors">
-              <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Back to Shortlist
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary transition-colors"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="mr-2" /> Back to
+              Shortlist
             </button>
             <span className="text-xs font-medium text-slate-400 bg-white/70 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-200 shadow-sm">
-              <FontAwesomeIcon icon={farCalendar} className="mr-1" />Rubric confirmed Apr 14
+              <FontAwesomeIcon icon={farCalendar} className="mr-1" />
+              Rubric confirmed Apr 14
             </span>
           </div>
 
           <div className="mb-6">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Comparison Matrix</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              Comparison Matrix
+            </h1>
             <p className="text-base text-slate-500 mt-1 font-medium">
-              Side‑by‑side evaluation of the selected candidates for Senior Full Stack Engineer
+              Side‑by‑side evaluation of the selected candidates for Senior Full
+              Stack Engineer
             </p>
           </div>
 
           {/* Candidate Cards Grid */}
           <div className={`grid ${gridCols} gap-5 items-stretch`}>
             {candidates.map((candidate, index) => {
-              const isTopMatch = candidate.matchScore === Math.max(...candidates.map(c => c.matchScore));
+              const isTopMatch =
+                candidate.matchScore ===
+                Math.max(...candidates.map((c) => c.matchScore));
               return (
                 <div
                   key={candidate.id}
@@ -234,59 +282,110 @@ export default function ComparePage() {
                 >
                   {isTopMatch && (
                     <div className="absolute -top-1 right-5 bg-[#2563eb] text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-sm z-10">
-                      <FontAwesomeIcon icon={faTrophy} className="mr-1" />Top Match
+                      <FontAwesomeIcon icon={faTrophy} className="mr-1" />
+                      Top Match
                     </div>
                   )}
 
                   <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 break-words">{candidate.name}</h2>
-                      <p className="text-sm text-slate-600 mt-1 font-medium">{candidate.role} · {candidate.years} yrs</p>
+                      <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 break-words">
+                        {candidate.name}
+                      </h2>
+                      <p className="text-sm text-slate-600 mt-1 font-medium">
+                        {candidate.role} · {candidate.years} yrs
+                      </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Match</div>
-                      <div className="text-4xl font-black text-[#2563eb] leading-none">{candidate.matchScore}%</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        Match
+                      </div>
+                      <div className="text-4xl font-black text-[#2563eb] leading-none">
+                        {candidate.matchScore}%
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mb-5 text-base text-slate-700 leading-relaxed">{candidate.summary}</div>
+                  <div className="mb-5 text-base text-slate-700 leading-relaxed">
+                    {candidate.summary}
+                  </div>
 
                   {/* Technical Proficiency */}
                   <div className="mb-4">
                     <div className="section-title text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2">
-                      <FontAwesomeIcon icon={faCode} className="mr-1.5 text-blue-600" />Technical Proficiency
+                      <FontAwesomeIcon
+                        icon={faCode}
+                        className="mr-1.5 text-blue-600"
+                      />
+                      Technical Proficiency
                     </div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="font-bold text-slate-800 text-lg">{candidate.technicalProficiency.score}<span className="text-sm font-normal text-slate-400">/10</span></span>
+                      <span className="font-bold text-slate-800 text-lg">
+                        {candidate.technicalProficiency.score}
+                        <span className="text-sm font-normal text-slate-400">
+                          /10
+                        </span>
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-slate-200/70 rounded-full overflow-hidden mb-2">
-                      <div className="progress-fill bg-[#2563eb] h-full rounded-full" style={{ width: `${candidate.technicalProficiency.score * 10}%` }} />
+                      <div
+                        className="progress-fill bg-[#2563eb] h-full rounded-full"
+                        style={{
+                          width: `${candidate.technicalProficiency.score * 10}%`,
+                        }}
+                      />
                     </div>
-                    <p className="text-sm text-slate-600 italic">{candidate.technicalProficiency.description}</p>
+                    <p className="text-sm text-slate-600 italic">
+                      {candidate.technicalProficiency.description}
+                    </p>
                   </div>
 
                   {/* Years of Experience */}
                   <div className="mb-4">
                     <div className="section-title text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2">
-                      <FontAwesomeIcon icon={faCalendar} className="mr-1.5 text-emerald-600" />Years of Experience
+                      <FontAwesomeIcon
+                        icon={faCalendar}
+                        className="mr-1.5 text-emerald-600"
+                      />
+                      Years of Experience
                     </div>
                     <div className="flex justify-between items-baseline mb-2">
-                      <span className="font-bold text-slate-800 text-lg">{candidate.experience.years}<span className="text-sm font-normal text-slate-400"> yrs</span></span>
+                      <span className="font-bold text-slate-800 text-lg">
+                        {candidate.experience.years}
+                        <span className="text-sm font-normal text-slate-400">
+                          {" "}
+                          yrs
+                        </span>
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-slate-200/70 rounded-full overflow-hidden mb-2">
-                      <div className="progress-fill bg-[#059669] h-full rounded-full" style={{ width: `${Math.min(candidate.experience.years * 10, 100)}%` }} />
+                      <div
+                        className="progress-fill bg-[#059669] h-full rounded-full"
+                        style={{
+                          width: `${Math.min(candidate.experience.years * 10, 100)}%`,
+                        }}
+                      />
                     </div>
-                    <p className="text-sm text-slate-600 italic">{candidate.experience.description}</p>
+                    <p className="text-sm text-slate-600 italic">
+                      {candidate.experience.description}
+                    </p>
                   </div>
 
                   {/* Core Competencies */}
                   <div className="mb-5">
                     <div className="section-title text-[11px] font-bold uppercase tracking-wider text-[#64748b] mb-2">
-                      <FontAwesomeIcon icon={faTags} className="mr-1.5 text-amber-600" />Core Competencies
+                      <FontAwesomeIcon
+                        icon={faTags}
+                        className="mr-1.5 text-amber-600"
+                      />
+                      Core Competencies
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {candidate.competencies.map((comp, i) => (
-                        <span key={i} className="px-3 py-1.5 bg-white/80 text-slate-700 text-sm rounded-full border border-slate-200 shadow-sm">
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-white/80 text-slate-700 text-sm rounded-full border border-slate-200 shadow-sm"
+                        >
                           {comp}
                         </span>
                       ))}
@@ -297,14 +396,19 @@ export default function ComparePage() {
                   <div className="mt-auto pt-4 border-t border-slate-200">
                     <p className="text-base text-slate-600 italic leading-relaxed">
                       <span className="text-purple-600 font-bold not-italic mr-2 text-sm tracking-wide">
-                        <FontAwesomeIcon icon={faWandMagicSparkles} className="mr-1" />AI
+                        <FontAwesomeIcon
+                          icon={faWandMagicSparkles}
+                          className="mr-1"
+                        />
+                        AI
                       </span>
                       "{candidate.aiCommentary}"
                     </p>
                   </div>
 
                   <button className="mt-5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold py-3.5 px-6 rounded-xl text-base shadow-md hover:shadow-lg transition-all w-full">
-                    <FontAwesomeIcon icon={faFileContract} className="mr-2" />Select {candidate.name.split(" ")[0]}
+                    <FontAwesomeIcon icon={faFileContract} className="mr-2" />
+                    Select {candidate.name.split(" ")[0]}
                   </button>
                 </div>
               );
@@ -317,39 +421,60 @@ export default function ComparePage() {
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700">
                 <FontAwesomeIcon icon={faStar} className="text-xl" />
               </div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-800">Sieve AI Recommendation</h2>
+              <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+                Sieve AI Recommendation
+              </h2>
             </div>
             <div className={`grid md:grid-cols-3 gap-6`}>
               <div className="bg-white/60 p-5 rounded-2xl border border-blue-100">
                 <p className="font-bold text-slate-800 text-lg mb-3 flex items-center">
-                  <FontAwesomeIcon icon={faTrophy} className="text-blue-600 mr-2" />
+                  <FontAwesomeIcon
+                    icon={faTrophy}
+                    className="text-blue-600 mr-2"
+                  />
                   Primary choice: {recommendation.primary.name}
                 </p>
-                <p className="text-base text-slate-600 leading-relaxed">{recommendation.primary.reason}</p>
+                <p className="text-base text-slate-600 leading-relaxed">
+                  {recommendation.primary.reason}
+                </p>
               </div>
               <div className="bg-white/60 p-5 rounded-2xl border border-emerald-200">
                 <p className="font-bold text-slate-800 text-lg mb-3 flex items-center">
-                  <FontAwesomeIcon icon={faScaleBalanced} className="text-emerald-600 mr-2" />
+                  <FontAwesomeIcon
+                    icon={faScaleBalanced}
+                    className="text-emerald-600 mr-2"
+                  />
                   Balanced alternative: {recommendation.alternative.name}
                 </p>
-                <p className="text-base text-slate-600 leading-relaxed">{recommendation.alternative.reason}</p>
+                <p className="text-base text-slate-600 leading-relaxed">
+                  {recommendation.alternative.reason}
+                </p>
               </div>
               <div className="bg-white/60 p-5 rounded-2xl border border-amber-200">
                 <p className="font-bold text-slate-800 text-lg mb-3 flex items-center">
-                  <FontAwesomeIcon icon={faTriangleExclamation} className="text-amber-600 mr-2" />
+                  <FontAwesomeIcon
+                    icon={faTriangleExclamation}
+                    className="text-amber-600 mr-2"
+                  />
                   Risk flag: {recommendation.riskFlag.name}
                 </p>
-                <p className="text-base text-slate-600 leading-relaxed">{recommendation.riskFlag.reason}</p>
+                <p className="text-base text-slate-600 leading-relaxed">
+                  {recommendation.riskFlag.reason}
+                </p>
               </div>
             </div>
             <div className="mt-6 flex justify-end">
               <button className="bg-primary hover:bg-primary-dark text-white font-bold py-3.5 px-8 rounded-xl text-base shadow-md hover:shadow-lg transition-all flex items-center gap-2">
-                <FontAwesomeIcon icon={faFileContract} className="mr-2" /> Confirm Selection & Generate Offer Letter
+                <FontAwesomeIcon icon={faFileContract} className="mr-2" />{" "}
+                Confirm Selection & Generate Offer Letter
               </button>
             </div>
             <p className="text-sm text-slate-500 mt-5 border-t border-slate-200 pt-5 flex items-center gap-2">
               <FontAwesomeIcon icon={faCircleInfo} className="text-blue-500" />
-              Recommendation based on rubric weights (Tech {data.rubricWeights.tech}%, Experience {data.rubricWeights.experience}%, Culture {data.rubricWeights.culture}%, Flags {data.rubricWeights.flags}%).
+              Recommendation based on rubric weights (Tech{" "}
+              {data.rubricWeights.tech}%, Experience{" "}
+              {data.rubricWeights.experience}%, Culture{" "}
+              {data.rubricWeights.culture}%, Flags {data.rubricWeights.flags}%).
             </p>
           </div>
         </div>
