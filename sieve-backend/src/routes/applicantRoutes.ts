@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { askApplicantQuestion } from '../controllers/applicantController';
+import { askApplicantQuestion, getApplicantsByJob } from '../controllers/applicantController';
+import { apiKeyAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -46,5 +47,8 @@ const router = Router();
  *         description: Job or Applicant not found.
  */
 router.post('/:id/ask', askApplicantQuestion);
+
+// Add this line where your other applicant routes are defined
+router.get('/job/:jobId', apiKeyAuth, getApplicantsByJob);
 
 export default router;

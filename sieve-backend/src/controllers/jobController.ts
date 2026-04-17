@@ -90,3 +90,16 @@ export const updateJobRubric = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error while updating rubric' });
   }
 };
+
+// Fetch all jobs for the dashboard
+export const getAllJobs = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // find() without parameters gets everything, sort({ createdAt: -1 }) puts newest first
+    const jobs = await Job.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: jobs.length, data: jobs });
+  } catch (error: any) {
+    console.error('Error fetching jobs:', error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve jobs' });
+  }
+};
+

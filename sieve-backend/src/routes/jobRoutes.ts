@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { createJob, generateRubric, updateJobRubric } from '../controllers/jobController';
+import { createJob, generateRubric, getAllJobs, updateJobRubric } from '../controllers/jobController';
 import { ingestApplicants } from '../controllers/applicantController'; 
 import multer from 'multer';
 import { uploadAndParseResume } from '../controllers/applicantController';
+import { apiKeyAuth } from '../middleware/auth'; 
+
 
 // Configure multer to hold the file in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
@@ -159,5 +161,8 @@ router.put('/:id/rubric', updateJobRubric);
  *         description: Job not found
  */
 router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume);
+
+// Add this line where your other job routes are defined
+router.get('/', apiKeyAuth, getAllJobs);
 
 export default router;

@@ -398,3 +398,19 @@ export const uploadAndParseResume = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error processing resume upload' });
   }
 };
+
+// Fetch applicants for a specific job
+export const getApplicantsByJob = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { jobId } = req.params;
+    
+    // Query the database for applicants matching this exact job ID
+    const applicants = await Applicant.find({ jobId }).sort({ createdAt: -1 });
+    
+    res.status(200).json({ success: true, count: applicants.length, data: applicants });
+  } catch (error: any) {
+    console.error(`Error fetching applicants for job ${req.params.jobId}:`, error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve applicants' });
+  }
+};
+
