@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { getTalentPoolIntelligence } from '../controllers/intelligenceController';
+import { Router } from "express";
+import { getTalentPoolIntelligence } from "../controllers/intelligenceController";
 
 const router = Router();
 
@@ -14,6 +14,6 @@ const router = Router();
  *       200:
  *         description: Dashboard insights generated successfully.
  */
-router.get('/', getTalentPoolIntelligence);
+router.get("/", getTalentPoolIntelligence);
 
 export default router;

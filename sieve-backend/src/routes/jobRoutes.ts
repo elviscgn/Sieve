@@ -1,10 +1,14 @@
-import { Router } from 'express';
-import { createJob, generateRubric, getAllJobs, updateJobRubric } from '../controllers/jobController';
-import { ingestApplicants } from '../controllers/applicantController'; 
-import multer from 'multer';
-import { uploadAndParseResume } from '../controllers/applicantController';
-import { apiKeyAuth } from '../middleware/auth'; 
-
+import { Router } from "express";
+import {
+  createJob,
+  generateRubric,
+  getAllJobs,
+  updateJobRubric,
+} from "../controllers/jobController";
+import { ingestApplicants } from "../controllers/applicantController";
+import multer from "multer";
+import { uploadAndParseResume } from "../controllers/applicantController";
+import { apiKeyAuth } from "../middleware/auth";
 
 // Configure multer to hold the file in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
@@ -36,7 +40,7 @@ const router = Router();
  *         description: Job created successfully
  */
 //POST /api/jobs
-router.post('/', createJob);
+router.post("/", createJob);
 
 /**
  * @openapi
@@ -68,7 +72,7 @@ router.post('/', createJob);
  *         description: Applicants successfully ingested
  */
 // POST /api/jobs/:id/applicants
-router.post('/:id/applicants', ingestApplicants);
+router.post("/:id/applicants", ingestApplicants);
 
 /**
  * @openapi
@@ -86,9 +90,9 @@ router.post('/:id/applicants', ingestApplicants);
  *     responses:
  *       200:
  *         description: Rubric generated successfully
- */      
-// POST /api/jobs/:id/parse-rubric  
-router.post('/:id/parse-rubric', generateRubric); 
+ */
+// POST /api/jobs/:id/parse-rubric
+router.post("/:id/parse-rubric", generateRubric);
 
 /**
  * @swagger
@@ -124,8 +128,7 @@ router.post('/:id/parse-rubric', generateRubric);
  *       404:
  *         description: Job not found
  */
-router.put('/:id/rubric', updateJobRubric);
-
+router.put("/:id/rubric", updateJobRubric);
 
 /**
  * @swagger
@@ -160,7 +163,11 @@ router.put('/:id/rubric', updateJobRubric);
  *       404:
  *         description: Job not found
  */
-router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume);
+router.post(
+  "/:id/upload-resume",
+  upload.single("resume"),
+  uploadAndParseResume,
+);
 
 /**
  * @openapi
@@ -191,6 +198,6 @@ router.post('/:id/upload-resume', upload.single('resume'), uploadAndParseResume)
  *       500:
  *         description: Server error retrieving jobs
  */
-router.get('/', apiKeyAuth, getAllJobs);
+router.get("/", apiKeyAuth, getAllJobs);
 
 export default router;

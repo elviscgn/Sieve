@@ -1,6 +1,9 @@
-import { Router } from 'express';
-import { askApplicantQuestion, getApplicantsByJob } from '../controllers/applicantController';
-import { apiKeyAuth } from '../middleware/auth';
+import { Router } from "express";
+import {
+  askApplicantQuestion,
+  getApplicantsByJob,
+} from "../controllers/applicantController";
+import { apiKeyAuth } from "../middleware/auth";
 
 const router = Router();
 
@@ -46,7 +49,7 @@ const router = Router();
  *       404:
  *         description: Job or Applicant not found.
  */
-router.post('/:id/ask', askApplicantQuestion);
+router.post("/:id/ask", askApplicantQuestion);
 
 /**
  * @openapi
@@ -84,6 +87,6 @@ router.post('/:id/ask', askApplicantQuestion);
  *       500:
  *         description: Server error retrieving applicants
  */
-router.get('/job/:jobId', apiKeyAuth, getApplicantsByJob);
+router.get("/job/:jobId", apiKeyAuth, getApplicantsByJob);
 
 export default router;

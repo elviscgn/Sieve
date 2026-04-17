@@ -1,16 +1,15 @@
-import { Router } from 'express';
-import { 
-  evaluateAllApplicants, 
-  getSessionResults, 
+import { Router } from "express";
+import {
+  evaluateAllApplicants,
+  getSessionResults,
   streamSessionProgress,
   overrideCandidateRank,
   compareSelectedCandidates,
-  getAllSessions
-} from '../controllers/applicantController';
-import { apiKeyAuth } from '../middleware/auth';
+  getAllSessions,
+} from "../controllers/applicantController";
+import { apiKeyAuth } from "../middleware/auth";
 
 const router = Router();
-
 
 /**
  * @openapi
@@ -35,7 +34,7 @@ const router = Router();
  *         description: Evaluation triggered successfully
  */
 // POST /api/sessions - Triggers evaluation
-router.post('/', evaluateAllApplicants);
+router.post("/", evaluateAllApplicants);
 
 /**
  * @openapi
@@ -55,8 +54,7 @@ router.post('/', evaluateAllApplicants);
  *         description: Leaderboard retrieved successfully
  */
 // GET /api/sessions/:id/results - Fetches leaderboard
-router.get('/:id/results', getSessionResults);
-
+router.get("/:id/results", getSessionResults);
 
 /**
  * @openapi
@@ -80,7 +78,7 @@ router.get('/:id/results', getSessionResults);
  *               type: string
  */
 // GET /api/sessions/:id/stream - Live SSE progress
-router.get('/:id/stream', streamSessionProgress);
+router.get("/:id/stream", streamSessionProgress);
 
 /**
  * @openapi
@@ -116,8 +114,7 @@ router.get('/:id/stream', streamSessionProgress);
  *       200:
  *         description: Recruiter override logged successfully
  */
-router.put('/:id/override', overrideCandidateRank);
-
+router.put("/:id/override", overrideCandidateRank);
 
 /**
  * @openapi
@@ -155,7 +152,7 @@ router.put('/:id/override', overrideCandidateRank);
  *       404:
  *         description: Job or candidates not found
  */
-router.post('/:id/compare', compareSelectedCandidates);
+router.post("/:id/compare", compareSelectedCandidates);
 
 /**
  * @openapi
@@ -167,6 +164,6 @@ router.post('/:id/compare', compareSelectedCandidates);
  *       200:
  *         description: Sessions retrieved successfully
  */
-router.get('/', apiKeyAuth, getAllSessions);
+router.get("/", apiKeyAuth, getAllSessions);
 
 export default router;
