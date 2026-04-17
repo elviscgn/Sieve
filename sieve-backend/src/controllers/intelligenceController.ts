@@ -1,53 +1,73 @@
-import { Request, Response } from 'express';
-import Job from '../models/Job';
-import Applicant from '../models/Applicant';
-import { generateIntelligenceInsights } from '../services/aiService';
+import { Request, Response } from "express";
+import Job from "../models/Job";
+import Applicant from "../models/Applicant";
+import { generateIntelligenceInsights } from "../services/aiService";
 
-export const getTalentPoolIntelligence = async (req: Request, res: Response) => {
+// Aggregates job sessions and evaluated applicant data to generate AI-driven talent pool insights.
+export const getTalentPoolIntelligence = async (
+  req: Request,
+  res: Response,
+) => {
   try {
+    // Using lean() to return plain JSON objects instead of heavy Mongoose documents for performance
     const jobs = await Job.find({}).lean();
-    const evaluatedApplicants = await Applicant.find({ 'evaluation.score': { $exists: true } }).lean();
+    const evaluatedApplicants = await Applicant.find({
+      "evaluation.score": { $exists: true },
+    }).lean();
 
     if (!jobs.length || !evaluatedApplicants.length) {
-      return res.status(404).json({ message: 'Not enough session data to generate intelligence.' });
+      return res
+        .status(404)
+        .json({ message: "Not enough session data to generate intelligence." });
     }
 
-    const sessionsSummary = jobs.map(job => {
+    const sessionsSummary = jobs.map((job) => {
       const jobApplicants = evaluatedApplicants.filter(
-        app => app.jobId.toString() === job._id.toString()
+        (app) => app.jobId.toString() === job._id.toString(),
       );
 
-      const averageScore = jobApplicants.length > 0 
-        ? Math.round(jobApplicants.reduce((sum, app) => sum + (app.evaluation?.score || 0), 0) / jobApplicants.length)
-        : 0;
+      // Using reduce to accumulate a total score sum before dividing by length to find the average
+      const averageScore =
+        jobApplicants.length > 0
+          ? Math.round(
+              jobApplicants.reduce(
+                (sum, app) => sum + (app.evaluation?.score || 0),
+                0,
+              ) / jobApplicants.length,
+            )
+          : 0;
 
-      const allGaps = jobApplicants.flatMap(app => app.evaluation?.gaps || []);
-      
-      // Extract dates so the AI can build the trend line over time
+      // Using flatMap to extract and combine nested arrays of skill gaps into a single, flat array
+      const allGaps = jobApplicants.flatMap(
+        (app) => app.evaluation?.gaps || [],
+      );
+
       const evaluationDates = jobApplicants
-        .map(app => app.evaluation?.evaluatedAt)
+        .map((app) => app.evaluation?.evaluatedAt)
         .filter(Boolean);
 
       return {
-        sessionId: job._id, // Allows AI to count affected sessions
-        roleTitle: job.title || 'Unknown Role',
-        createdAt: job.createdAt, // Job creation timeline
-        evaluationDates: evaluationDates, // When the screening actually ran
+        sessionId: job._id,
+        roleTitle: job.title || "Unknown Role",
+        createdAt: job.createdAt,
+        evaluationDates: evaluationDates,
         totalApplicants: jobApplicants.length,
         averageCompositeScore: averageScore,
-        notableObservations: allGaps.slice(0, 10) // Upped to 10 for better data
+        notableObservations: allGaps.slice(0, 10),
       };
     });
 
-    const intelligenceData = await generateIntelligenceInsights(sessionsSummary);
+    const intelligenceData =
+      await generateIntelligenceInsights(sessionsSummary);
 
     res.status(200).json({
-      message: 'Intelligence generated successfully',
-      data: intelligenceData
+      message: "Intelligence generated successfully",
+      data: intelligenceData,
     });
-
   } catch (error) {
-    console.error('Error fetching intelligence:', error);
-    res.status(500).json({ message: 'Server error generating intelligence dashboard' });
+    console.error("Error fetching intelligence:", error);
+    res
+      .status(500)
+      .json({ message: "Server error generating intelligence dashboard" });
   }
 };
