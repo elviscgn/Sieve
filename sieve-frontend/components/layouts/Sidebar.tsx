@@ -90,7 +90,8 @@ export default function Sidebar() {
           )}
 
           {mainNavItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -101,7 +102,10 @@ export default function Sidebar() {
                     : "text-white hover:bg-white/15"
                 } ${collapsed ? "justify-center" : ""}`}
               >
-                <FontAwesomeIcon icon={item.icon} className="w-4 h-4 flex-shrink-0" />
+                <FontAwesomeIcon
+                  icon={item.icon}
+                  className="w-4 h-4 flex-shrink-0"
+                />
                 {!collapsed && (
                   <>
                     <span className="flex-1">{item.label}</span>
@@ -136,7 +140,10 @@ export default function Sidebar() {
                     : "text-white hover:bg-white/15"
                 } ${collapsed ? "justify-center" : ""}`}
               >
-                <FontAwesomeIcon icon={item.icon} className="w-4 h-4 flex-shrink-0" />
+                <FontAwesomeIcon
+                  icon={item.icon}
+                  className="w-4 h-4 flex-shrink-0"
+                />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
@@ -151,10 +158,15 @@ export default function Sidebar() {
             {!collapsed && (
               <>
                 <div className="flex-1">
-                  <h4 className="font-bold text-[13px] text-white">WeThinkCode_</h4>
+                  <h4 className="font-bold text-[13px] text-white">
+                    WeThinkCode_
+                  </h4>
                   <p className="text-[10px] text-white/75">Coding academy</p>
                 </div>
-                <FontAwesomeIcon icon={faChevronRight} className="w-3.5 h-3.5 text-white/70" />
+                <FontAwesomeIcon
+                  icon={faChevronRight}
+                  className="w-3.5 h-3.5 text-white/70"
+                />
               </>
             )}
           </div>

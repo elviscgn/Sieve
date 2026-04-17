@@ -13,15 +13,17 @@ import {
   faSpinner,
   faFilter,
   faUsers,
-  faCalendar,
   faCheckCircle,
   faClock,
-  faFileContract,
-  faLayerGroup,
-  faLightbulb,
   faCircleCheck,
+  faBuilding,
+  faLocationDot,
+  faTag,
+  faSignal,
+  faCalendar,
+  faLightbulb,
+  faWrench,
 } from "@fortawesome/free-solid-svg-icons";
-import { dataService } from "@/lib/mockData";
 
 interface Job {
   _id: string;
@@ -45,7 +47,6 @@ export default function JobsPage() {
   useEffect(() => {
     const loadJobs = async () => {
       try {
-        // Mock data matching Sieve style
         const mockJobs: Job[] = [
           {
             _id: "1",
@@ -120,7 +121,7 @@ export default function JobsPage() {
       result = result.filter(
         (j) =>
           j.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          j.department.toLowerCase().includes(searchTerm.toLowerCase())
+          j.department.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     if (statusFilter !== "all") {
@@ -141,7 +142,11 @@ export default function JobsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
-        <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          className="text-4xl text-primary"
+        />
       </div>
     );
   }
@@ -152,7 +157,9 @@ export default function JobsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[28px] font-bold text-[#0f172a]">Jobs</h1>
-          <p className="text-sm text-[#64748b] mt-1">Create and manage job postings for screening</p>
+          <p className="text-sm text-[#64748b] mt-1">
+            Create and manage job postings for screening
+          </p>
         </div>
         <Link
           href="/jobs/new"
@@ -170,7 +177,9 @@ export default function JobsPage() {
               <FontAwesomeIcon icon={faBriefcase} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#0f172a]">{jobs.length}</div>
+              <div className="text-2xl font-bold text-[#0f172a]">
+                {jobs.length}
+              </div>
               <div className="text-xs text-[#64748b]">Total Jobs</div>
             </div>
           </div>
@@ -181,7 +190,9 @@ export default function JobsPage() {
               <FontAwesomeIcon icon={faCheckCircle} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#0f172a]">{jobs.filter(j => j.status === "Active").length}</div>
+              <div className="text-2xl font-bold text-[#0f172a]">
+                {jobs.filter((j) => j.status === "Active").length}
+              </div>
               <div className="text-xs text-[#64748b]">Active Jobs</div>
             </div>
           </div>
@@ -192,7 +203,9 @@ export default function JobsPage() {
               <FontAwesomeIcon icon={faUsers} />
             </div>
             <div>
-              <div className="text-2xl font-bold text-[#0f172a]">{jobs.reduce((sum, j) => sum + j.applicants, 0)}</div>
+              <div className="text-2xl font-bold text-[#0f172a]">
+                {jobs.reduce((sum, j) => sum + j.applicants, 0)}
+              </div>
               <div className="text-xs text-[#64748b]">Total Applicants</div>
             </div>
           </div>
@@ -225,14 +238,19 @@ export default function JobsPage() {
           <FontAwesomeIcon icon={faFilter} className="mr-1" /> Advanced Filters
         </button>
       </div>
-
       {/* Jobs Table */}
-      <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-x-auto">
         {filtered.length === 0 ? (
           <div className="text-center py-12">
-            <FontAwesomeIcon icon={faBriefcase} className="text-4xl text-[#cbd5e1] mb-3" />
+            <FontAwesomeIcon
+              icon={faBriefcase}
+              className="text-4xl text-[#cbd5e1] mb-3"
+            />
             <p className="text-[#64748b]">No jobs found</p>
-            <Link href="/jobs/new" className="inline-block mt-3 text-primary font-semibold hover:underline">
+            <Link
+              href="/jobs/new"
+              className="inline-block mt-3 text-primary font-semibold hover:underline"
+            >
               Create your first job →
             </Link>
           </div>
@@ -240,65 +258,130 @@ export default function JobsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#e2e8f0] bg-[#f8fafc]">
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Job Title</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Department</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Location</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Type</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Status</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Applicants</th>
-                <th className="text-left py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Rubric</th>
-                <th className="text-right py-4 px-5 text-[11px] font-semibold text-[#475569] uppercase">Actions</th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faBriefcase} className="mr-1.5" /> Job
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faBuilding} className="mr-1.5" /> Dept
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faLocationDot} className="mr-1.5" />{" "}
+                  Location
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faTag} className="mr-1.5" /> Type
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faSignal} className="mr-1.5" /> Status
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faUsers} className="mr-1.5" /> Apps
+                </th>
+                <th className="text-left py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  <FontAwesomeIcon icon={faWrench} className="mr-1.5" /> Rubric
+                </th>
+                <th className="text-right py-4 px-4 text-[11px] font-semibold text-[#475569] uppercase whitespace-nowrap">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((job) => (
-                <tr key={job._id} className="border-b border-[#f1f5f9] hover:bg-[#fafbff] transition">
-                 <td className="py-4 px-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                        <FontAwesomeIcon icon={faBriefcase} className="text-sm" />
+                <tr
+                  key={job._id}
+                  className="border-b border-[#f1f5f9] hover:bg-[#fafbff] transition"
+                >
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                        <FontAwesomeIcon
+                          icon={faBriefcase}
+                          className="text-xs"
+                        />
                       </div>
-                      <span className="font-medium text-[#0f172a]">{job.title}</span>
+                      <span
+                        className="font-medium text-[#0f172a] truncate max-w-[200px]"
+                        title={job.title}
+                      >
+                        {job.title}
+                      </span>
                     </div>
                   </td>
-                  <td className="py-4 px-5 text-[#475569]">{job.department}</td>
-                  <td className="py-4 px-5 text-[#475569]">{job.location}</td>
-                  <td className="py-4 px-5 text-[#475569]">{job.type}</td>
-                  <td className="py-4 px-5">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(job.status)}`}>
-                      {job.status === "Active" && <FontAwesomeIcon icon={faCheckCircle} className="mr-1 text-[10px]" />}
-                      {job.status === "Draft" && <FontAwesomeIcon icon={faClock} className="mr-1 text-[10px]" />}
+                  <td className="py-4 px-4 text-[#475569] whitespace-nowrap">
+                    {job.department}
+                  </td>
+                  <td className="py-4 px-4 text-[#475569] whitespace-nowrap">
+                    {job.location}
+                  </td>
+                  <td className="py-4 px-4 text-[#475569] whitespace-nowrap">
+                    {job.type}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(job.status)}`}
+                    >
+                      {job.status === "Active" && (
+                        <FontAwesomeIcon
+                          icon={faCheckCircle}
+                          className="text-[10px]"
+                        />
+                      )}
+                      {job.status === "Draft" && (
+                        <FontAwesomeIcon
+                          icon={faClock}
+                          className="text-[10px]"
+                        />
+                      )}
                       {job.status}
                     </span>
                   </td>
-                  <td className="py-4 px-5 text-[#475569]">
-                    <FontAwesomeIcon icon={faUsers} className="text-xs mr-1 text-[#94a3b8]" />
+                  <td className="py-4 px-4 text-[#475569] whitespace-nowrap">
+                    <FontAwesomeIcon
+                      icon={faUsers}
+                      className="text-xs mr-1 text-[#94a3b8]"
+                    />
                     {job.applicants}
                   </td>
-                 <td className="py-4 px-5">
-                {job.rubricConfirmed ? (
-                      <span className="text-green-700 bg-green-50 px-2 py-1 rounded-full text-[10px] font-medium border border-green-200 inline-flex items-center gap-1">
-                        <FontAwesomeIcon icon={faCircleCheck} className="text-[10px]" /> Confirmed
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    {job.rubricConfirmed ? (
+                      <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-1 rounded-full text-[10px] font-medium border border-green-200">
+                        <FontAwesomeIcon
+                          icon={faCircleCheck}
+                          className="text-[10px]"
+                        />{" "}
+                        Confirmed
                       </span>
                     ) : (
-                      <span className="text-amber-700 bg-amber-50 px-2 py-1 rounded-full text-[10px] font-medium border border-amber-200 inline-flex items-center gap-1">
-                        <FontAwesomeIcon icon={faClock} className="text-[10px]" /> Pending
+                      <span className="inline-flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-1 rounded-full text-[10px] font-medium border border-amber-200">
+                        <FontAwesomeIcon
+                          icon={faClock}
+                          className="text-[10px]"
+                        />{" "}
+                        Pending
                       </span>
                     )}
                   </td>
-                  <td className="py-4 px-5 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-3">
                       <Link
-                        href={job.status === "Draft" ? `/jobs/${job._id}/rubric` : `/jobs/${job._id}/applicants`}
+                        href={
+                          job.status === "Draft"
+                            ? `/jobs/${job._id}/rubric`
+                            : `/jobs/${job._id}/applicants`
+                        }
                         className="text-primary font-medium text-xs hover:underline inline-flex items-center gap-1"
                       >
-                        {job.status === "Draft" ? "Continue" : "View"} <FontAwesomeIcon icon={faChevronRight} className="text-[10px]" />
+                        {job.status === "Draft" ? "Continue" : "View"}{" "}
+                        <FontAwesomeIcon
+                          icon={faChevronRight}
+                          className="text-[10px]"
+                        />
                       </Link>
-                      <button className="text-[#94a3b8] hover:text-primary p-1">
-                        <FontAwesomeIcon icon={faEdit} className="text-xs" />
+                      <button className="text-[#94a3b8] hover:text-primary transition">
+                        <FontAwesomeIcon icon={faEdit} />
                       </button>
-                      <button className="text-[#94a3b8] hover:text-red-500 p-1">
-                        <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                      <button className="text-[#94a3b8] hover:text-red-500 transition">
+                        <FontAwesomeIcon icon={faTrash} />
                       </button>
                     </div>
                   </td>
@@ -313,11 +396,11 @@ export default function JobsPage() {
       <div className="mt-6 p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl flex items-start gap-3">
         <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center flex-shrink-0">
           <FontAwesomeIcon icon={faLightbulb} />
-
         </div>
         <div>
           <p className="text-sm text-green-800">
-            <span className="font-bold">Pro tip:</span> Jobs with confirmed rubrics are ready for screening. Draft jobs need rubric setup first.
+            <span className="font-bold">Pro tip:</span> Jobs with confirmed
+            rubrics are ready for screening. Draft jobs need rubric setup first.
           </p>
         </div>
       </div>

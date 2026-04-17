@@ -7,7 +7,7 @@ const workSans = Work_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
-  display: "swap", 
+  display: "swap",
 });
 
 export const metadata: Metadata = {

@@ -103,7 +103,7 @@ export default function SessionsPage() {
       result = result.filter(
         (s) =>
           s.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.department.toLowerCase().includes(searchTerm.toLowerCase())
+          s.department.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
     if (statusFilter !== "all") {
@@ -124,7 +124,11 @@ export default function SessionsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
-        <FontAwesomeIcon icon={faSpinner} spin className="text-4xl text-primary" />
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          className="text-4xl text-primary"
+        />
       </div>
     );
   }
@@ -133,8 +137,12 @@ export default function SessionsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[28px] font-bold text-[#0f172a]">Screening Sessions</h1>
-          <p className="text-sm text-[#64748b] mt-1">Track and manage all your screening sessions</p>
+          <h1 className="text-[28px] font-bold text-[#0f172a]">
+            Screening Sessions
+          </h1>
+          <p className="text-sm text-[#64748b] mt-1">
+            Track and manage all your screening sessions
+          </p>
         </div>
         <Link
           href="/jobs/new"
@@ -173,7 +181,11 @@ export default function SessionsPage() {
         {filtered.map((session) => (
           <Link
             key={session.id}
-            href={session.status === "Draft" ? `/jobs/${session.id}/applicants` : `/sessions/${session.id}/shortlist`}
+            href={
+              session.status === "Draft"
+                ? `/jobs/${session.id}/applicants`
+                : `/sessions/${session.id}/shortlist`
+            }
             className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm hover:shadow-md hover:border-primary/30 transition-all group"
           >
             <div className="flex items-start justify-between mb-3">
@@ -188,9 +200,21 @@ export default function SessionsPage() {
                   <p className="text-xs text-[#64748b]">{session.department}</p>
                 </div>
               </div>
-              <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(session.status)}`}>
-                {session.status === "Screening" && <FontAwesomeIcon icon={faClock} className="mr-1 text-[10px]" />}
-                {session.status === "Completed" && <FontAwesomeIcon icon={faCheckCircle} className="mr-1 text-[10px]" />}
+              <span
+                className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold border ${getStatusBadge(session.status)}`}
+              >
+                {session.status === "Screening" && (
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="mr-1 text-[10px]"
+                  />
+                )}
+                {session.status === "Completed" && (
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="mr-1 text-[10px]"
+                  />
+                )}
                 {session.status}
               </span>
             </div>
@@ -202,15 +226,19 @@ export default function SessionsPage() {
               </span>
               {session.avgScore && (
                 <span className="font-medium">
-                  Avg Score: <span className="text-[#0f172a]">{session.avgScore}%</span>
+                  Avg Score:{" "}
+                  <span className="text-[#0f172a]">{session.avgScore}%</span>
                 </span>
               )}
             </div>
 
             <div className="flex items-center justify-between text-xs">
-              <span className="text-[#94a3b8]">Created {session.createdAt}</span>
+              <span className="text-[#94a3b8]">
+                Created {session.createdAt}
+              </span>
               <span className="text-primary font-medium group-hover:underline">
-                {session.status === "Draft" ? "Continue Setup" : "View Results"} →
+                {session.status === "Draft" ? "Continue Setup" : "View Results"}{" "}
+                →
               </span>
             </div>
 
@@ -218,7 +246,9 @@ export default function SessionsPage() {
               <div className="mt-3 h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary rounded-full"
-                  style={{ width: `${(session.screened / session.candidates) * 100}%` }}
+                  style={{
+                    width: `${(session.screened / session.candidates) * 100}%`,
+                  }}
                 />
               </div>
             )}
@@ -227,9 +257,15 @@ export default function SessionsPage() {
 
         {filtered.length === 0 && (
           <div className="col-span-full text-center py-12">
-            <FontAwesomeIcon icon={faLayerGroup} className="text-4xl text-[#cbd5e1] mb-3" />
+            <FontAwesomeIcon
+              icon={faLayerGroup}
+              className="text-4xl text-[#cbd5e1] mb-3"
+            />
             <p className="text-[#64748b]">No sessions found</p>
-            <Link href="/jobs/new" className="inline-block mt-3 text-primary font-semibold">
+            <Link
+              href="/jobs/new"
+              className="inline-block mt-3 text-primary font-semibold"
+            >
               Create your first session →
             </Link>
           </div>

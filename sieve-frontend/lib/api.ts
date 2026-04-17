@@ -23,7 +23,11 @@ export const apiClient = {
     return fetchWithAuth(endpoint, { method: "GET" });
   },
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    data?: any,
+    p0?: { headers: {} },
+  ): Promise<T> {
     return fetchWithAuth(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
