@@ -41,6 +41,7 @@ import { faBell as farBell } from "@fortawesome/free-regular-svg-icons";
 import { apiClient } from "@/lib/api";
 import type { ScreeningSession, ScreeningResult, Applicant, Job } from "@/types";
 import Sortable from "sortablejs";
+import { div } from "three/tsl";
 
 // Types for display
 interface CandidateDisplay {
@@ -274,78 +275,6 @@ export default function ShortlistPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f4f7fe]">
-      {/* Sidebar */}
-      <aside className={`bg-[#2563eb] flex flex-col sticky top-0 h-screen flex-shrink-0 transition-all duration-300 z-20 ${sidebarCollapsed ? "w-16" : "w-60"}`}>
-        <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute top-[22px] -right-3 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-[#e2e8f0] text-[#2563eb] cursor-pointer text-xs">
-          <FontAwesomeIcon icon={sidebarCollapsed ? faChevronRight : faChevronLeft} />
-        </button>
-        <div className="px-4 pb-5 pt-5 flex items-center gap-2.5 border-b border-white/15 mb-2">
-          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center text-white text-base border border-white/25">
-            <FontAwesomeIcon icon={faFileContract} />
-          </div>
-          {!sidebarCollapsed && (
-            <div>
-              <h1 className="font-extrabold text-[17px] text-white tracking-tight">Sieve</h1>
-              <span className="text-[10px] text-white/65 font-medium">AI-Assisted Screening</span>
-            </div>
-          )}
-        </div>
-        <div className="px-2.5 py-0.5">
-          {!sidebarCollapsed && <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">Main Menu</div>}
-          <Link href="/dashboard" className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faHouse} className="w-4" />
-            {!sidebarCollapsed && <span>Dashboard</span>}
-          </Link>
-          <Link href="/jobs" className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faBriefcase} className="w-4" />
-            {!sidebarCollapsed && <span>Jobs</span>}
-            {!sidebarCollapsed && <span className="ml-auto bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-xl font-bold">3</span>}
-          </Link>
-          <Link href="/candidates" className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faUserGroup} className="w-4" />
-            {!sidebarCollapsed && <span>Candidates</span>}
-          </Link>
-          <div className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl bg-white text-[#2563eb] font-bold">
-            <FontAwesomeIcon icon={faLayerGroup} className="w-4" />
-            {!sidebarCollapsed && <span>Sessions</span>}
-            {!sidebarCollapsed && <span className="ml-auto bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-xl font-bold">5</span>}
-          </div>
-          <Link href="/intelligence" className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faBrain} className="w-4" />
-            {!sidebarCollapsed && <span>Intelligence</span>}
-          </Link>
-        </div>
-        <div className="px-2.5 py-0.5 mt-1">
-          {!sidebarCollapsed && <div className="text-[9.5px] font-bold uppercase tracking-wider text-white/60 py-3.5 px-2.5">Settings</div>}
-          <div className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faSliders} className="w-4" />
-            {!sidebarCollapsed && <span>Preferences</span>}
-          </div>
-          <div className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faPlug} className="w-4" />
-            {!sidebarCollapsed && <span>API Config</span>}
-          </div>
-          <div className="flex items-center gap-2.5 px-3.5 py-2 my-0.5 rounded-xl text-white hover:bg-white/15 font-medium text-[13px]">
-            <FontAwesomeIcon icon={faBookOpen} className="w-4" />
-            {!sidebarCollapsed && <span>Help & Docs</span>}
-          </div>
-        </div>
-        <div className="mt-auto mx-2.5 mb-2 bg-white/15 rounded-xl p-3 border border-white/18 flex items-center gap-2.5">
-          <div className="w-[34px] h-[34px] rounded-lg bg-white/20 flex items-center justify-center">
-            <span className="text-white font-bold text-xs">WT</span>
-          </div>
-          {!sidebarCollapsed && (
-            <>
-              <div className="flex-1">
-                <h4 className="font-bold text-[13px] text-white">WeThinkCode_</h4>
-                <p className="text-[10px] text-white/75">Coding academy</p>
-              </div>
-              <FontAwesomeIcon icon={faChevronRight} className="text-white/70 text-[11px]" />
-            </>
-          )}
-        </div>
-      </aside>
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
