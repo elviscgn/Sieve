@@ -414,3 +414,40 @@ export const getApplicantsByJob = async (req: Request, res: Response): Promise<v
   }
 };
 
+// Fetch all sessions (Jobs) with their applicant statistics
+export const getAllSessions = async (req: Request, res: Response) => {
+  try {
+    // Fetch all jobs, sorted newest first
+    const jobs = await Job.find().sort({ createdAt: -1 }).lean();
+
+    // Attach the applicant stats to each job for the dashboard cards
+    const sessionsSummary = await Promise.all(
+      jobs.map(async (job) => {
+        // Count total applicants for this specific job
+        const applicantCount = await Applicant.countDocuments({ jobId: job._id });
+        
+        // Count how many have actually been scored by the AI
+        const evaluatedCount = await Applicant.countDocuments({ 
+          jobId: job._id, 
+          'evaluation.score': { $exists: true } 
+        });
+
+        return {
+          ...job,
+          applicantCount,
+          evaluatedCount,
+          status: job.rubric ? 'Active' : 'Draft' // Tells the UI if it is ready
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      count: sessionsSummary.length,
+      data: sessionsSummary
+    });
+  } catch (error) {
+    console.error('Error fetching sessions summary:', error);
+    res.status(500).json({ message: 'Server error retrieving sessions' });
+  }
+};

@@ -4,8 +4,10 @@ import {
   getSessionResults, 
   streamSessionProgress,
   overrideCandidateRank,
-  compareSelectedCandidates
+  compareSelectedCandidates,
+  getAllSessions
 } from '../controllers/applicantController';
+import { apiKeyAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -154,5 +156,17 @@ router.put('/:id/override', overrideCandidateRank);
  *         description: Job or candidates not found
  */
 router.post('/:id/compare', compareSelectedCandidates);
+
+/**
+ * @openapi
+ * /api/sessions:
+ *   get:
+ *     summary: Fetch all sessions (jobs) with their applicant statistics
+ *     tags: [Sessions]
+ *     responses:
+ *       200:
+ *         description: Sessions retrieved successfully
+ */
+router.get('/', apiKeyAuth, getAllSessions);
 
 export default router;
