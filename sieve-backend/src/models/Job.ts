@@ -1,6 +1,6 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
-// 1. TypeScript Interface (for our code)
+// Defines the TypeScript interfaces and Mongoose schema for a Job, including its raw description and evaluation rubric criteria.
 export interface IDimension {
   name: string;
   weight: number;
@@ -12,7 +12,7 @@ export interface IJob extends Document {
   rawJD: string;
   rubric?: {
     dimensions: IDimension[];
-    dealbreakers: string[]; 
+    dealbreakers: string[];
     niceToHave: string[];
     confirmedBy?: string;
     confirmedAt?: Date;
@@ -21,7 +21,6 @@ export interface IJob extends Document {
   updatedAt?: Date;
 }
 
-// 2. Mongoose Schema (for the database)
 const JobSchema: Schema = new Schema(
   {
     title: { type: String, required: true },
@@ -40,9 +39,7 @@ const JobSchema: Schema = new Schema(
       confirmedAt: { type: Date },
     },
   },
-  { 
-    timestamps: true // Automatically manages createdAt and updatedAt 
-  } 
+  { timestamps: true },
 );
 
-export default mongoose.model<IJob>('Job', JobSchema);
+export default mongoose.model<IJob>("Job", JobSchema);
