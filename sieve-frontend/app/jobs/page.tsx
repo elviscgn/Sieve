@@ -238,6 +238,7 @@ export default function JobsPage() {
           <FontAwesomeIcon icon={faFilter} className="mr-1" /> Advanced Filters
         </button>
       </div>
+
       {/* Jobs Table */}
       <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-x-auto">
         {filtered.length === 0 ? (
