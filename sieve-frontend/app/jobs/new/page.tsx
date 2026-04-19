@@ -1,334 +1,350 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faFileLines,
+  faWandMagicSparkles,
+  faPenToSquare,
+  faPencil,
+  faCircleCheck,
+  faIdBadge,
+  faBuilding,
+  faLocationDot,
+  faChartSimple,
+  faTags,
+  faAlignLeft,
+  faWifi,
+  faCodeBranch,
+  faSeedling,
+  faBolt,
+  faStar,
+  faCrown,
+  faSliders,
+  faLock,
+  faArrowLeft,
+  faPlus,
+  faTimes,
+  faCheck,
+  faSpinner,
+  faChevronDown,
+  faSearch,
+  faBell,
+  faFileExport,
+  faLayerGroup,
   faHouse,
   faBriefcase,
   faUserGroup,
-  faLayerGroup,
   faBrain,
-  faSliders,
-  faPlug,
   faBookOpen,
-  faSearch,
-  faFileExport,
-  faPlus,
-  faBell,
-  faChevronDown,
-  faChevronLeft,
-  faChevronRight,
-  faChevronUp,
+  faPlug,
   faBars,
-  faFileContract,
-  faPen,
-  faUndoAlt,
-  faColumns,
-  faDownload,
-  faFilePdf,
-  faGripVertical,
-  faPencilAlt,
-  faCheckCircle,
-  faExclamationCircle,
-  faArrowRight,
-  faTimes,
-  faSpinner,
+  faCode,
+  faGraduationCap,
+  faCircleUser,
+  faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import { faBell as farBell } from "@fortawesome/free-regular-svg-icons";
+import {
+  faBell as farBell,
+  faBuilding as farBuilding,
+  faStar as farStar,
+  faFileLines as farFileLines,
+  faPenToSquare as farPenToSquare,
+  faIdBadge as farIdBadge,
+} from "@fortawesome/free-regular-svg-icons";
 import { apiClient } from "@/lib/api";
-import type {
-  ScreeningSession,
-  ScreeningResult,
-  Applicant,
-  Job,
-} from "@/types";
-import Sortable from "sortablejs";
-import CandidateDetailPanel from "@/app/sessions/[id]/shortlist/_components/CandidateDetailPanel";
-// import CandidateDetailPanel from "./_components/CandidateDetailPanel";
+import type { Job, RubricDimension, Rubric } from "@/types";
 
-// Types for display
-interface CandidateDisplay {
-  id: string;
+// Types for the wizard
+interface DimensionState {
   name: string;
-  role: string;
-  exp: string;
-  skills: string[];
-  location?: string;
-  composite: number;
-  confidence: "High" | "Medium" | "Low";
-  flags: string[];
-  dimensionScores: {
-    tech: number;
-    exp: number;
-    edu: number;
-    prof: number;
-    flags: number;
-  };
-  rationales: string[];
-  strengths: string[];
-  gaps: string[];
-  aiRec: string;
-  initials: string;
-  avatarBg: string;
-  avatarColor: string;
-  aiRank: number;
-  category: "high" | "flagged" | "low";
+  desc: string;
+  tag: string;
+  color: string;
+  icon: any;
+  bgColor: string;
+  iconColor: string;
+  points: number;
 }
 
-export default function ShortlistPage() {
-  const params = useParams();
-  const router = useRouter();
-  const sessionId = params.id as string;
+const DEFAULT_DIMENSIONS: DimensionState[] = [
+  {
+    name: "Technical Skills Match",
+    desc: "Relevance of tech stack and tools",
+    tag: "Technical Skills",
+    color: "bg-[#eff6ff] text-[#2563eb]",
+    icon: faCode,
+    bgColor: "#eff6ff",
+    iconColor: "#2563eb",
+    points: 30,
+  },
+  {
+    name: "Experience Relevance",
+    desc: "Years and domain expertise",
+    tag: "Experience",
+    color: "bg-[#f0fdf4] text-[#16a34a]",
+    icon: faBriefcase,
+    bgColor: "#f0fdf4",
+    iconColor: "#16a34a",
+    points: 20,
+  },
+  {
+    name: "Education Alignment",
+    desc: "Degree/certification match",
+    tag: "Education",
+    color: "bg-[#fef9c3] text-[#92400e]",
+    icon: faGraduationCap,
+    bgColor: "#fef9c3",
+    iconColor: "#92400e",
+    points: 20,
+  },
+  {
+    name: "Profile Completeness",
+    desc: "Portfolio, links, activity",
+    tag: "Profile",
+    color: "bg-[#f5f3ff] text-[#7c3aed]",
+    icon: faCircleUser,
+    bgColor: "#f5f3ff",
+    iconColor: "#7c3aed",
+    points: 10,
+  },
+  {
+    name: "Red Flag Indicators",
+    desc: "Gaps, job hopping, etc",
+    tag: "Red Flags",
+    color: "bg-[#fee2e2] text-[#b91c1c]",
+    icon: faTriangleExclamation,
+    bgColor: "#fee2e2",
+    iconColor: "#b91c1c",
+    points: 20,
+  },
+];
 
-  // Data states
-  const [job, setJob] = useState<Job | null>(null);
-  const [candidates, setCandidates] = useState<CandidateDisplay[]>([]);
-  const [recruiterRanks, setRecruiterRanks] = useState<number[]>([]);
-  const [filteredCandidates, setFilteredCandidates] = useState<
-    CandidateDisplay[]
-  >([]);
-  const [currentFilter, setCurrentFilter] = useState<string>("all");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+export default function NewJobPage() {
+  const router = useRouter();
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [mode, setMode] = useState<"paste" | "manual">("paste");
+
+  // Step 1 state
+  const [jdText, setJdText] = useState("");
+  const [jobTitle, setJobTitle] = useState("Senior Full Stack Engineer");
+  const [department, setDepartment] = useState("Engineering");
+  const [location, setLocation] = useState("Remote");
+  const [experienceLevel, setExperienceLevel] = useState("Senior");
+  const [tags, setTags] = useState<string[]>([
+    "React",
+    "Node.js",
+    "TypeScript",
+    "AWS",
+  ]);
+  const [manualDesc, setManualDesc] = useState("");
+  const [tagInput, setTagInput] = useState("");
+
+  // Step 2 state
+  const [dimensions, setDimensions] =
+    useState<DimensionState[]>(DEFAULT_DIMENSIONS);
+  const [dealbreakers, setDealbreakers] = useState<string[]>([
+    "5+ years experience",
+    "Full stack (React + Node.js)",
+    "Must be eligible to work remotely",
+  ]);
+  const [niceToHaves, setNiceToHaves] = useState<string[]>([
+    "GraphQL experience",
+    "Open source contributions",
+  ]);
+  const [editingDimensionIdx, setEditingDimensionIdx] = useState<number | null>(
+    null,
+  );
+  const [showDealbreakerInput, setShowDealbreakerInput] = useState(false);
+  const [showNiceToHaveInput, setShowNiceToHaveInput] = useState(false);
+  const [newDealbreaker, setNewDealbreaker] = useState("");
+  const [newNiceToHave, setNewNiceToHave] = useState("");
+
+  // UI state
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingRubric, setIsGeneratingRubric] = useState(false);
+  const [createdJobId, setCreatedJobId] = useState<string | null>(null);
+  const [extractionBannerVisible, setExtractionBannerVisible] = useState(false);
+  const [greeting, setGreeting] = useState("Good morning");
+
+  // Sidebar collapse
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // UI states
-  const [detailPanelCandidate, setDetailPanelCandidate] =
-    useState<CandidateDisplay | null>(null);
-  const [compareModalOpen, setCompareModalOpen] = useState(false);
-  const [compareCandidates, setCompareCandidates] = useState<
-    CandidateDisplay[]
-  >([]);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Refs
-  const tableBodyRef = useRef<HTMLDivElement>(null);
-  const sortableRef = useRef<Sortable | null>(null);
-
-  // Load session data
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch session results
-        const session = await apiClient.get<ScreeningSession>(
-          `/sessions/${sessionId}/results`,
-        );
-        const jobData = await apiClient.get<Job>(`/jobs/${session.jobId}`);
-        setJob(jobData);
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good morning");
+    else if (hour < 18) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+  }, []);
 
-        // Transform results to display format
-        const displayCandidates: CandidateDisplay[] = await Promise.all(
-          session.results.map(async (result, idx) => {
-            const applicant = await apiClient.get<Applicant>(
-              `/applicants/${result.applicantId}`,
-            );
-            const profile = applicant.profile;
-            const firstName = profile["First Name"] || "";
-            const lastName = profile["Last Name"] || "";
-            const name = `${firstName} ${lastName}`.trim();
-            const role =
-              profile["Work Experience"]?.[0]?.["Job Title"] || "Candidate";
-            const exp = profile["Work Experience"]?.[0]?.["Start Date"]
-              ? `${new Date().getFullYear() - new Date(profile["Work Experience"][0]["Start Date"]).getFullYear()}yrs`
-              : "N/A";
-            const skills = profile.Skills?.map((s: any) => s.name) || [];
-            const location = profile.Location || "Johannesburg, ZA";
-            const initials = (firstName[0] || "") + (lastName[0] || "");
+  // Calculate total points
+  const totalPoints = dimensions.reduce((sum, d) => sum + d.points, 0);
+  const remainingPoints = 100 - totalPoints;
+  const isBalanced = totalPoints === 100;
 
-            // Dimension scores
-            const dimScores = {
-              tech:
-                result.dimensions.find((d) => d.name.includes("Technical"))
-                  ?.score || 0,
-              exp:
-                result.dimensions.find((d) => d.name.includes("Experience"))
-                  ?.score || 0,
-              edu:
-                result.dimensions.find((d) => d.name.includes("Education"))
-                  ?.score || 0,
-              prof:
-                result.dimensions.find((d) => d.name.includes("Profile"))
-                  ?.score || 0,
-              flags:
-                result.dimensions.find((d) => d.name.includes("Red Flag"))
-                  ?.score || 0,
-            };
+  // Validate step 1
+  const isStep1Valid =
+    mode === "paste"
+      ? jdText.trim().length > 0
+      : jobTitle.trim().length > 0 && tags.length >= 2;
 
-            // Category
-            let category: "high" | "flagged" | "low" = "high";
-            if (result.flags.length > 0) category = "flagged";
-            else if (result.confidence === "low") category = "low";
-
-            // Confidence
-            let confidence: "High" | "Medium" | "Low" = "Medium";
-            if (result.confidence === "high") confidence = "High";
-            else if (result.confidence === "low") confidence = "Low";
-
-            // Avatar styling
-            const composite = result.compositeScore;
-            const avatarBg =
-              composite >= 80
-                ? "#dcfce7"
-                : composite >= 60
-                  ? "#fef3c7"
-                  : "#fee2e2";
-            const avatarColor =
-              composite >= 80
-                ? "#166534"
-                : composite >= 60
-                  ? "#92400e"
-                  : "#991b1b";
-
-            return {
-              id: result.applicantId,
-              name,
-              role,
-              exp,
-              skills,
-              location,
-              composite,
-              confidence,
-              flags: result.flags,
-              dimensionScores: dimScores,
-              rationales: result.dimensions.map((d) => d.rationale),
-              strengths: result.strengths,
-              gaps: result.gaps,
-              aiRec: result.recommendation,
-              initials,
-              avatarBg,
-              avatarColor,
-              aiRank: result.aiRank || idx + 1,
-              category,
-            };
-          }),
-        );
-
-        // Sort by AI rank initially
-        displayCandidates.sort((a, b) => a.aiRank - b.aiRank);
-        setCandidates(displayCandidates);
-        setRecruiterRanks(displayCandidates.map((_, i) => i + 1));
-        setFilteredCandidates(displayCandidates);
-      } catch (error) {
-        console.error("Failed to load shortlist:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, [sessionId]);
-
-  // Apply filters
-  useEffect(() => {
-    let filtered = [...candidates];
-    if (currentFilter === "high") {
-      filtered = candidates.filter((c) => c.category === "high");
-    } else if (currentFilter === "flagged") {
-      filtered = candidates.filter((c) => c.flags.length > 0);
-    } else if (currentFilter === "low") {
-      filtered = candidates.filter((c) => c.category === "low");
-    }
-
-    // Sort by current recruiter ranks
-    const candidateIndexMap = new Map(candidates.map((c, i) => [c.id, i]));
-    filtered.sort((a, b) => {
-      const idxA = candidateIndexMap.get(a.id)!;
-      const idxB = candidateIndexMap.get(b.id)!;
-      return recruiterRanks[idxA] - recruiterRanks[idxB];
-    });
-
-    setFilteredCandidates(filtered);
-  }, [candidates, recruiterRanks, currentFilter]);
-
-  // Initialize Sortable after render
-  useEffect(() => {
-    if (tableBodyRef.current && !isLoading) {
-      if (sortableRef.current) sortableRef.current.destroy();
-      sortableRef.current = new Sortable(tableBodyRef.current, {
-        handle: ".drag-handle",
-        animation: 200,
-        ghostClass: "opacity-40",
-        onEnd: (evt) => {
-          const rows = Array.from(
-            tableBodyRef.current?.querySelectorAll(".shortlist-row") || [],
-          );
-          const newRanks = [...recruiterRanks];
-          rows.forEach((row, newIndex) => {
-            const candidateId = row.getAttribute("data-id");
-            const candidateIdx = candidates.findIndex(
-              (c) => c.id === candidateId,
-            );
-            if (candidateIdx !== -1) {
-              newRanks[candidateIdx] = newIndex + 1;
-            }
-          });
-          setRecruiterRanks(newRanks);
-          showToast("Recruiter ranks updated");
-          // Call override API
-          saveRecruiterRanks(newRanks);
-        },
-      });
-    }
-    return () => {
-      if (sortableRef.current) sortableRef.current.destroy();
-    };
-  }, [filteredCandidates, isLoading, candidates, recruiterRanks]);
-
-  const saveRecruiterRanks = async (ranks: number[]) => {
-    setIsSaving(true);
+  // Create job (Step 1 completion)
+  const handleCreateJob = async () => {
+    setIsLoading(true);
     try {
-      const overrides = candidates.map((c, i) => ({
-        applicantId: c.id,
-        recruiterRank: ranks[i],
-      }));
-      await apiClient.put(`/sessions/${sessionId}/override`, { overrides });
+      const payload = {
+        title: jobTitle,
+        rawJD:
+          mode === "paste"
+            ? jdText
+            : `Title: ${jobTitle}\nDepartment: ${department}\nLocation: ${location}\nLevel: ${experienceLevel}\nRequirements: ${tags.join(", ")}\n\n${manualDesc}`,
+      };
+
+      const job = await apiClient.post<Job>("/jobs", payload);
+      setCreatedJobId(job._id);
+
+      // Move to step 2 and generate rubric
+      setCurrentStep(2);
+      await generateRubric(job._id);
     } catch (error) {
-      console.error("Failed to save recruiter ranks:", error);
-      showToast("Failed to save ranks");
+      console.error("Failed to create job:", error);
+      alert("Failed to create job. Please try again.");
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
-  const resetToAIRanks = () => {
-    const aiRanks = candidates.map((c) => c.aiRank);
-    setRecruiterRanks(aiRanks);
-    saveRecruiterRanks(aiRanks);
-    showToast("Reset to AI ranks");
+  // Generate AI rubric
+  const generateRubric = async (jobId: string) => {
+    setIsGeneratingRubric(true);
+    try {
+      const response = await apiClient.post<{ job: Job }>(
+        `/jobs/${jobId}/parse-rubric`,
+      );
+
+      if (response.job.rubric) {
+        // Update dimensions from AI response
+        const aiRubric = response.job.rubric;
+        const newDimensions = dimensions.map((dim, idx) => {
+          const aiDim = aiRubric.dimensions[idx];
+          return {
+            ...dim,
+            name: aiDim?.name || dim.name,
+            desc: aiDim?.description || dim.desc,
+            points: aiDim?.weight || dim.points,
+          };
+        });
+        setDimensions(newDimensions);
+        setDealbreakers(aiRubric.dealbreakers || dealbreakers);
+        setNiceToHaves(aiRubric.niceToHave || niceToHaves);
+        setExtractionBannerVisible(true);
+      }
+    } catch (error) {
+      console.error("Failed to generate rubric:", error);
+      // Keep default dimensions if AI fails
+    } finally {
+      setIsGeneratingRubric(false);
+    }
   };
 
-  const showToast = (message: string) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 2000);
+  // Handle paste JD analysis
+  const handleAnalyzePaste = async () => {
+    if (!jdText.trim()) return;
+
+    // Prefill with demo data (in production, this would call AI)
+    setIsLoading(true);
+    setTimeout(() => {
+      setJobTitle("Senior Full Stack Engineer");
+      setDepartment("Engineering");
+      setLocation("Remote");
+      setExperienceLevel("Senior");
+      setTags(["React", "Node.js", "TypeScript", "PostgreSQL"]);
+      setExtractionBannerVisible(true);
+      setMode("manual");
+      setIsLoading(false);
+    }, 2000);
   };
 
-  const handleCompare = () => {
-    const selected = candidates.filter((c) => selectedIds.has(c.id));
-    setCompareCandidates(selected);
-    setCompareModalOpen(true);
+  // Confirm rubric and navigate to applicants
+  const handleConfirmRubric = async () => {
+    if (!isBalanced || !createdJobId) return;
+
+    setIsLoading(true);
+    try {
+      const rubric: Rubric = {
+        dimensions: dimensions.map((d) => ({
+          name: d.name,
+          weight: d.points,
+          keywords: [],
+        })),
+        dealbreakers,
+        niceToHave: niceToHaves,
+      };
+
+      await apiClient.put(`/jobs/${createdJobId}/rubric`, { rubric });
+
+      // Navigate to applicant ingestion
+      router.push(`/jobs/${createdJobId}/applicants`);
+    } catch (error) {
+      console.error("Failed to save rubric:", error);
+      alert("Failed to save rubric. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const toggleCandidateSelection = (id: string) => {
-    const newSet = new Set(selectedIds);
-    if (newSet.has(id)) newSet.delete(id);
-    else newSet.add(id);
-    setSelectedIds(newSet);
+  // Dimension point handlers
+  const updateDimensionPoints = (idx: number, delta: number) => {
+    const newDimensions = [...dimensions];
+    const newPoints = newDimensions[idx].points + delta;
+    if (newPoints >= 0 && newPoints <= 60) {
+      newDimensions[idx].points = newPoints;
+      setDimensions(newDimensions);
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen bg-[#f4f7fe] items-center justify-center">
-        <FontAwesomeIcon
-          icon={faSpinner}
-          spin
-          className="text-4xl text-primary"
-        />
-      </div>
-    );
-  }
+  // Tag handlers
+  const addTag = () => {
+    const val = tagInput.trim();
+    if (val && !tags.includes(val) && tags.length < 10) {
+      setTags([...tags, val]);
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (idx: number) => {
+    setTags(tags.filter((_, i) => i !== idx));
+  };
+
+  // Dealbreaker handlers
+  const addDealbreaker = () => {
+    if (newDealbreaker.trim()) {
+      setDealbreakers([...dealbreakers, newDealbreaker.trim()]);
+      setNewDealbreaker("");
+      setShowDealbreakerInput(false);
+    }
+  };
+
+  const removeDealbreaker = (idx: number) => {
+    setDealbreakers(dealbreakers.filter((_, i) => i !== idx));
+  };
+
+  // Nice to have handlers
+  const addNiceToHave = () => {
+    if (newNiceToHave.trim()) {
+      setNiceToHaves([...niceToHaves, newNiceToHave.trim()]);
+      setNewNiceToHave("");
+      setShowNiceToHaveInput(false);
+    }
+  };
+
+  const removeNiceToHave = (idx: number) => {
+    setNiceToHaves(niceToHaves.filter((_, i) => i !== idx));
+  };
 
   return (
     <div className="flex min-h-screen bg-[#f4f7fe]">
@@ -346,18 +362,19 @@ export default function ShortlistPage() {
                 className="text-[#94a3b8] text-[13px]"
               />
               <input
-                placeholder="Search candidates..."
+                placeholder="Search jobs, candidates..."
                 className="border-0 bg-transparent py-1.5 px-2.5 text-[13px] w-full outline-none"
               />
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <button className="bg-transparent border border-[#e2e8f0] rounded-full py-1.5 px-4 font-semibold text-xs flex items-center gap-1.5 hover:border-primary hover:text-primary">
               <FontAwesomeIcon icon={faFileExport} /> Export
             </button>
             <Link
               href="/jobs/new"
-              className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 hover:bg-primary-dark"
+              className="bg-primary border-0 rounded-full py-2 px-[18px] font-bold text-xs text-white flex items-center gap-1.5 shadow-[0_4px_14px_-4px_rgba(37,99,235,0.45)] hover:bg-primary-dark"
             >
               <FontAwesomeIcon icon={faPlus} /> New Session
             </Link>
@@ -386,463 +403,732 @@ export default function ShortlistPage() {
         </header>
 
         <div className="p-6 pb-8 overflow-y-auto flex-1">
-          {/* Breadcrumb & Header */}
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <div className="text-sm mb-1">
-                <Link
-                  href="/sessions"
-                  className="text-[#2563eb] hover:underline font-medium"
+          <div className="text-[13px] text-[#475569] font-medium mb-1">
+            {greeting}, Elvis · New Session
+          </div>
+
+          <div className="mb-[18px]">
+            <h2 className="font-bold text-[26px] text-[#0f172a]">
+              Create Session
+            </h2>
+            <p className="text-[#475569] text-[13px]">
+              Define the job brief and set scoring weights.
+            </p>
+          </div>
+
+          {/* Step Indicator */}
+          <div className="flex items-center justify-center max-w-[400px] mx-auto mb-6">
+            <div className="flex items-center w-full">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${currentStep === 1 ? "bg-primary text-white border-2 border-primary" : "bg-[#10b981] text-white border-2 border-[#10b981]"}`}
                 >
-                  Sessions
-                </Link>
-                <span className="text-[#94a3b8] mx-1.5">/</span>
-                <span className="text-[#475569]">
-                  {job?.title || "Loading..."}
+                  {currentStep === 1 ? "1" : <FontAwesomeIcon icon={faCheck} />}
+                </div>
+                <span
+                  className={`text-xs font-bold mt-1.5 ${currentStep === 1 ? "text-[#0f172a]" : "text-[#0f172a]"}`}
+                >
+                  Job Brief
                 </span>
-                <span className="text-[#94a3b8] mx-1.5">/</span>
-                <span className="font-semibold text-[#0f172a]">Shortlist</span>
               </div>
-              <h1 className="font-bold text-[28px] text-[#0f172a] tracking-tight">
-                Ranked Shortlist
-              </h1>
-              <p className="text-sm text-[#64748b] mt-1">
-                {candidates.length} candidates · Screened{" "}
-                {new Date().toLocaleDateString()} · Rubric confirmed before
-                screening
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="bg-transparent border border-[#e2e8f0] rounded-full py-2 px-4 font-semibold text-sm flex items-center gap-2 hover:border-primary hover:text-primary">
-                <FontAwesomeIcon icon={faPen} className="text-xs" /> Edit Rubric
-              </button>
-            </div>
-          </div>
-
-          {/* Filter Bar */}
-          <div className="flex flex-wrap items-center justify-between mb-5">
-            <div className="flex items-center gap-4">
-              {["all", "high", "flagged", "low"].map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setCurrentFilter(filter)}
-                  className={`pb-1.5 text-sm font-medium transition-all ${
-                    currentFilter === filter
-                      ? "text-[#2563eb] border-b-2 border-[#2563eb] font-semibold"
-                      : "text-[#64748b] hover:text-[#0f172a]"
-                  }`}
+              <div
+                className={`flex-1 h-0.5 mx-1 ${currentStep === 2 ? "bg-[#10b981]" : "bg-[#e2e8f0]"}`}
+              />
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${currentStep === 2 ? "bg-primary text-white border-2 border-primary" : "bg-white border-2 border-[#e2e8f0] text-[#94a3b8]"}`}
                 >
-                  {filter === "all" && "All"}
-                  {filter === "high" && "High Match"}
-                  {filter === "flagged" && "Flagged"}
-                  {filter === "low" && "Low Confidence"}
-                  {filter === "all" && ` (${candidates.length})`}
-                  {filter === "high" &&
-                    ` (${candidates.filter((c) => c.category === "high").length})`}
-                  {filter === "flagged" &&
-                    ` (${candidates.filter((c) => c.flags.length > 0).length})`}
-                  {filter === "low" &&
-                    ` (${candidates.filter((c) => c.category === "low").length})`}
-                </button>
-              ))}
-              <div className="h-6 w-px bg-[#e2e8f0] mx-1"></div>
-              <button
-                onClick={resetToAIRanks}
-                className="text-xs font-medium text-[#64748b] hover:text-[#2563eb] flex items-center gap-1.5"
-              >
-                <FontAwesomeIcon icon={faUndoAlt} /> Reset to AI Ranks
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCompare}
-                disabled={selectedIds.size < 2 || selectedIds.size > 3}
-                className={`rounded-full py-2 px-5 font-semibold text-sm flex items-center gap-2 transition ${
-                  selectedIds.size >= 2 && selectedIds.size <= 3
-                    ? "bg-primary text-white hover:bg-primary-dark"
-                    : "bg-[#e2e8f0] text-[#64748b] cursor-not-allowed"
-                }`}
-              >
-                <FontAwesomeIcon icon={faColumns} /> Compare Selected
-              </button>
-              <button className="bg-transparent border border-[#e2e8f0] rounded-full py-2 px-4 text-sm flex items-center gap-1.5 hover:border-primary">
-                <FontAwesomeIcon icon={faDownload} /> CSV
-              </button>
-              <button className="bg-transparent border border-[#e2e8f0] rounded-full py-2 px-4 text-sm flex items-center gap-1.5 hover:border-primary">
-                <FontAwesomeIcon icon={faFilePdf} /> PDF
-              </button>
+                  2
+                </div>
+                <span
+                  className={`text-xs font-medium mt-1.5 ${currentStep === 2 ? "text-[#0f172a] font-bold" : "text-[#94a3b8]"}`}
+                >
+                  Scoring Rubric
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden">
-            <div className="grid grid-cols-[auto_auto_auto_1fr_auto] gap-3 px-5 py-3 border-b border-[#e2e8f0] text-xs font-bold text-[#64748b] uppercase tracking-wide">
-              <div className="w-10"></div>
-              <div className="w-8 text-center">AI</div>
-              <div className="w-8 text-center">Rec.</div>
-              <div>Candidate</div>
-              <div className="text-right pr-4">Score</div>
-            </div>
+          {/* Step 1: Job Brief */}
+          {currentStep === 1 && (
+            <div className="w-full max-w-[720px] mx-auto">
+              {/* Mode toggle */}
+              <div className="flex justify-end mb-3">
+                <div className="inline-flex bg-[#f1f5f9] rounded-full p-0.5">
+                  <button
+                    onClick={() => setMode("paste")}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold ${mode === "paste" ? "bg-primary text-white" : "bg-transparent text-[#475569]"}`}
+                  >
+                    Paste JD
+                  </button>
+                  <button
+                    onClick={() => setMode("manual")}
+                    className={`px-4 py-1.5 rounded-full text-xs font-semibold ${mode === "manual" ? "bg-primary text-white" : "bg-transparent text-[#475569]"}`}
+                  >
+                    Manual Form
+                  </button>
+                </div>
+              </div>
 
-            <div ref={tableBodyRef} className="divide-y divide-[#f1f5f9]">
-              {filteredCandidates.map((cand) => {
-                const candidateIdx = candidates.findIndex(
-                  (c) => c.id === cand.id,
-                );
-                const aiRank = cand.aiRank;
-                const recRank = recruiterRanks[candidateIdx];
-                const isEdited = aiRank !== recRank;
-                const scoreColor =
-                  cand.composite >= 80
-                    ? "#10b981"
-                    : cand.composite >= 60
-                      ? "#f59e0b"
-                      : "#ef4444";
-                const initials = cand.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("");
+              {/* Paste JD Card */}
+              {mode === "paste" && (
+                <div className="bg-white rounded-2xl shadow-sm border border-[#e2e8f0] p-5 relative">
+                  <h3 className="text-[22px] font-extrabold text-[#0f172a] mb-1 flex items-center">
+                    <FontAwesomeIcon
+                      icon={farFileLines}
+                      className="text-[#2563eb] text-lg mr-2.5"
+                    />
+                    Paste Job Description
+                  </h3>
+                  <p className="text-[13px] text-[#475569] mb-4 flex items-center">
+                    <FontAwesomeIcon
+                      icon={faWandMagicSparkles}
+                      className="text-[#2563eb] text-[10px] mr-1.5"
+                    />
+                    Gemini will extract role details and build a scoring rubric
+                    automatically.
+                  </p>
 
-                return (
-                  <div key={cand.id}>
-                    <div
-                      className="shortlist-row grid grid-cols-[auto_auto_auto_1fr_auto] gap-3 px-5 py-4 items-center"
-                      data-id={cand.id}
+                  <textarea
+                    value={jdText}
+                    onChange={(e) => setJdText(e.target.value)}
+                    className="w-full min-h-[220px] border border-[#e2e8f0] rounded-xl p-4 text-sm resize-y focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                    placeholder="Paste your full job description here..."
+                  />
+                  <div className="flex justify-between items-center mt-3">
+                    <span className="text-xs text-[#94a3b8]">
+                      {jdText.length} characters
+                    </span>
+                    <button
+                      onClick={handleAnalyzePaste}
+                      disabled={!jdText.trim() || isLoading}
+                      className="bg-primary text-white font-bold py-2.5 px-6 rounded-full text-sm flex items-center gap-1.5 shadow-sm hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <div className="drag-handle w-10 flex justify-center cursor-grab text-[#94a3b8]">
-                        <FontAwesomeIcon icon={faGripVertical} />
-                      </div>
-                      <div className="w-8 text-center font-bold text-sm text-[#475569]">
-                        {aiRank}
-                      </div>
-                      <div
-                        className={`w-8 text-center font-bold text-sm ${isEdited ? "text-[#2563eb]" : ""}`}
-                      >
-                        {recRank}
-                        {isEdited && (
+                      {isLoading ? (
+                        <>
                           <FontAwesomeIcon
-                            icon={faPencilAlt}
-                            className="ml-1 text-[10px] text-[#2563eb] opacity-70"
-                          />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="checkbox"
-                          className="candidate-checkbox rounded"
-                          checked={selectedIds.has(cand.id)}
-                          onChange={() => toggleCandidateSelection(cand.id)}
+                            icon={faSpinner}
+                            spin
+                            className="mr-1"
+                          />{" "}
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          Extract with Gemini{" "}
+                          <span className="inline-block animate-pulse">✦</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual Form Card */}
+              {mode === "manual" && (
+                <div className="bg-white rounded-2xl shadow-sm border border-[#e2e8f0] p-5 pb-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-[22px] font-extrabold text-[#0f172a] mb-0.5 flex items-center">
+                        <FontAwesomeIcon
+                          icon={farPenToSquare}
+                          className="text-[#2563eb] text-lg mr-2.5"
                         />
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                          style={{
-                            background: cand.avatarBg,
-                            color: cand.avatarColor,
-                          }}
-                        >
-                          {initials}
-                        </div>
-                        <div>
-                          <div className="font-bold text-[#0f172a]">
-                            {cand.name}{" "}
-                            <span className="text-[#64748b] text-xs font-normal ml-1">
-                              {cand.role}
+                        Manual Job Details
+                      </h3>
+                      <p className="text-[13px] text-[#475569] flex items-center">
+                        <FontAwesomeIcon
+                          icon={faPencil}
+                          className="text-[#2563eb] text-[10px] mr-1.5"
+                        />
+                        Fill in the role information manually.
+                      </p>
+                    </div>
+                  </div>
+
+                  {extractionBannerVisible && (
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl p-2.5 mb-4 text-[13px] text-[#166534] flex items-center gap-2">
+                      <FontAwesomeIcon
+                        icon={faCircleCheck}
+                        className="text-[#10b981]"
+                      />
+                      Gemini extracted the role details below.
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={farIdBadge}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Job Title *
+                      </label>
+                      <input
+                        type="text"
+                        value={jobTitle}
+                        onChange={(e) => setJobTitle(e.target.value)}
+                        className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        placeholder="e.g. Senior Frontend Developer"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={farBuilding}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Department
+                      </label>
+                      <input
+                        type="text"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        placeholder="Engineering"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={faLocationDot}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="w-full border border-[#e2e8f0] rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        placeholder="e.g. Remote"
+                      />
+                      <div className="flex gap-2 mt-2">
+                        {["Remote", "Hybrid", "On-site"].map((loc) => (
+                          <button
+                            key={loc}
+                            onClick={() => setLocation(loc)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${location === loc ? "bg-primary text-white" : "bg-[#f1f5f9] text-[#475569]"}`}
+                          >
+                            {loc === "Remote" && (
+                              <FontAwesomeIcon
+                                icon={faWifi}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {loc === "Hybrid" && (
+                              <FontAwesomeIcon
+                                icon={faCodeBranch}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {loc === "On-site" && (
+                              <FontAwesomeIcon
+                                icon={farBuilding}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {loc}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={faChartSimple}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Experience Level
+                      </label>
+                      <div className="flex gap-2 flex-wrap">
+                        {["Junior", "Mid", "Senior", "Lead"].map((exp) => (
+                          <button
+                            key={exp}
+                            onClick={() => setExperienceLevel(exp)}
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${experienceLevel === exp ? "bg-primary text-white" : "bg-[#f1f5f9] text-[#475569]"}`}
+                          >
+                            {exp === "Junior" && (
+                              <FontAwesomeIcon
+                                icon={faSeedling}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {exp === "Mid" && (
+                              <FontAwesomeIcon
+                                icon={faBolt}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {exp === "Senior" && (
+                              <FontAwesomeIcon
+                                icon={farStar}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {exp === "Lead" && (
+                              <FontAwesomeIcon
+                                icon={faCrown}
+                                className="text-[10px] mr-1"
+                              />
+                            )}
+                            {exp}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={faTags}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Key Requirements * (min 2)
+                      </label>
+                      <div className="border border-[#e2e8f0] rounded-xl p-2 flex flex-wrap gap-2 items-center">
+                        {tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="bg-[#eff6ff] text-[#2563eb] text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1"
+                          >
+                            {tag}
+                            <FontAwesomeIcon
+                              icon={faTimes}
+                              className="cursor-pointer hover:text-red-500"
+                              onClick={() => removeTag(idx)}
+                            />
+                          </span>
+                        ))}
+                        <input
+                          type="text"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && (e.preventDefault(), addTag())
+                          }
+                          className="flex-1 min-w-[120px] text-sm py-1 outline-none"
+                          placeholder="Type skill and press Enter"
+                        />
+                      </div>
+                      <p className="text-[10px] text-[#94a3b8] mt-1">
+                        Max 10 tags
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#475569] mb-1">
+                        <FontAwesomeIcon
+                          icon={faAlignLeft}
+                          className="text-primary text-[11px] mr-1.5"
+                        />
+                        Job Description (optional)
+                      </label>
+                      <textarea
+                        value={manualDesc}
+                        onChange={(e) => setManualDesc(e.target.value)}
+                        className="w-full border border-[#e2e8f0] rounded-xl p-3 text-sm min-h-[80px] resize-y"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end mt-6">
+                    <button
+                      onClick={handleCreateJob}
+                      disabled={!isStep1Valid || isLoading}
+                      className="bg-primary text-white font-bold py-2.5 px-6 rounded-full text-sm flex items-center gap-1.5 shadow-sm hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <FontAwesomeIcon
+                            icon={faSpinner}
+                            spin
+                            className="mr-1"
+                          />{" "}
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          Continue to Scoring Rubric <span>✦</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2: Scoring Rubric */}
+          {currentStep === 2 && (
+            <div className="w-full max-w-[800px] mx-auto space-y-4">
+              {/* Summary Card */}
+              <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#0f172a]">
+                      {jobTitle}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="px-2.5 py-1 bg-[#f1f5f9] text-[#475569] text-xs font-medium rounded-full">
+                        <FontAwesomeIcon
+                          icon={farBuilding}
+                          className="text-[10px] mr-1"
+                        />
+                        {department}
+                      </span>
+                      <span className="px-2.5 py-1 bg-[#f1f5f9] text-[#475569] text-xs font-medium rounded-full">
+                        <FontAwesomeIcon
+                          icon={faLocationDot}
+                          className="text-[10px] mr-1"
+                        />
+                        {location}
+                      </span>
+                      <span className="px-2.5 py-1 bg-[#f1f5f9] text-[#475569] text-xs font-medium rounded-full">
+                        <FontAwesomeIcon
+                          icon={faChartSimple}
+                          className="text-[10px] mr-1"
+                        />
+                        {experienceLevel}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#f5f3ff] text-[#7c3aed] text-[10px] font-bold px-2.5 py-1 rounded-full border border-[#e9d5ff]">
+                      <FontAwesomeIcon
+                        icon={faWandMagicSparkles}
+                        className="text-[8px] mr-1"
+                      />
+                      AI
+                    </span>
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+                    >
+                      <FontAwesomeIcon icon={faPencil} /> Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scoring Weights Card */}
+              <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5">
+                <h3 className="text-lg font-extrabold text-[#0f172a] flex items-center">
+                  <FontAwesomeIcon
+                    icon={faSliders}
+                    className="text-primary mr-2"
+                  />
+                  Scoring Weights
+                </h3>
+                <p className="text-[13px] text-[#475569] mb-3">
+                  Allocate 100 points across the five dimensions.
+                </p>
+
+                <div className="flex justify-center mb-4">
+                  <div
+                    className={`inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold ${
+                      isBalanced
+                        ? "bg-[#ecfdf5] text-[#10b981]"
+                        : remainingPoints < 0
+                          ? "bg-[#fee2e2] text-[#b91c1c]"
+                          : "bg-[#f1f5f9] text-[#475569]"
+                    }`}
+                  >
+                    {isBalanced ? (
+                      <>
+                        <FontAwesomeIcon
+                          icon={faCircleCheck}
+                          className="mr-1.5"
+                        />{" "}
+                        Balanced — ready to confirm
+                      </>
+                    ) : remainingPoints < 0 ? (
+                      `Over by ${-remainingPoints} pts`
+                    ) : (
+                      `${remainingPoints} pts remaining`
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {dimensions.map((dim, idx) => {
+                    const segments = dim.points / 10;
+                    const isMax = dim.points >= 60;
+                    const isMin = dim.points <= 0;
+                    const plusDisabled = isMax || remainingPoints <= 0;
+                    const minusDisabled = isMin;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-white border border-[#e2e8f0] rounded-xl p-4 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center flex-1 min-w-0">
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 10,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                              marginRight: 12,
+                              background: dim.bgColor,
+                              color: dim.iconColor,
+                            }}
+                          >
+                            <FontAwesomeIcon icon={dim.icon} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-[15px] text-[#0f172a]">
+                              {dim.name}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {editingDimensionIdx === idx ? (
+                                <input
+                                  type="text"
+                                  defaultValue={dim.desc}
+                                  onBlur={(e) => {
+                                    const newDimensions = [...dimensions];
+                                    newDimensions[idx].desc = e.target.value;
+                                    setDimensions(newDimensions);
+                                    setEditingDimensionIdx(null);
+                                  }}
+                                  onKeyDown={(e) =>
+                                    e.key === "Enter" &&
+                                    (e.currentTarget as HTMLInputElement).blur()
+                                  }
+                                  className="text-xs border border-[#e2e8f0] rounded px-2 py-1"
+                                  autoFocus
+                                />
+                              ) : (
+                                <>
+                                  <span className="text-xs text-[#475569]">
+                                    {dim.desc}
+                                  </span>
+                                  <FontAwesomeIcon
+                                    icon={faPencil}
+                                    className="text-[10px] text-[#94a3b8] cursor-pointer hover:text-primary"
+                                    onClick={() => setEditingDimensionIdx(idx)}
+                                  />
+                                </>
+                              )}
+                            </div>
+                            <span
+                              className={`inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${dim.color}`}
+                            >
+                              {dim.tag}
                             </span>
                           </div>
-                          <div className="text-xs text-[#64748b]">
-                            {cand.exp} · {cand.skills.slice(0, 2).join("/")}
-                          </div>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {cand.flags.map((flag) => {
-                              let colorClass = "bg-red-100 text-red-800";
-                              if (flag === "Overqualified")
-                                colorClass = "bg-orange-100 text-orange-800";
-                              if (flag === "SkillMismatch")
-                                colorClass = "bg-amber-100 text-amber-800";
-                              if (flag === "Underexperienced")
-                                colorClass = "bg-gray-100 text-gray-800";
-                              if (flag === "Low Confidence")
-                                colorClass = "bg-yellow-50 text-yellow-700";
-                              return (
-                                <span
-                                  key={flag}
-                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${colorClass}`}
-                                >
-                                  {flag}
-                                </span>
-                              );
-                            })}
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 pr-4">
-                        <div className="flex-1 min-w-[120px]">
-                          <div className="flex items-center gap-1 text-[9px] font-bold text-[#64748b] uppercase tracking-wider mb-0.5">
-                            <span className="w-6">T</span>
-                            <span className="w-6">E</span>
-                            <span className="w-6">Ed</span>
-                            <span className="w-6">P</span>
-                            <span className="w-6">F</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {(
-                              ["tech", "exp", "edu", "prof", "flags"] as const
-                            ).map((dim) => {
-                              const val = cand.dimensionScores[dim];
-                              let bgClass = "";
-                              if (dim === "tech") bgClass = "bg-[#2563eb]";
-                              else if (dim === "exp") bgClass = "bg-[#16a34a]";
-                              else if (dim === "edu") bgClass = "bg-[#d97706]";
-                              else if (dim === "prof") bgClass = "bg-[#7c3aed]";
-                              else bgClass = "bg-[#dc2626]";
-                              return (
-                                <div
-                                  key={dim}
-                                  className="w-6 h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden"
-                                >
-                                  <div
-                                    className={`h-full ${bgClass}`}
-                                    style={{ width: `${val}%` }}
-                                  ></div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="text-right ml-2">
-                          <span
-                            className="text-2xl font-black"
-                            style={{ color: scoreColor }}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button
+                            onClick={() => updateDimensionPoints(idx, -10)}
+                            disabled={minusDisabled}
+                            className="w-8 h-8 rounded-full border border-[#e2e8f0] flex items-center justify-center text-lg hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
                           >
-                            {cand.composite}
-                          </span>
-                          <span className="text-[10px] text-[#94a3b8] block">
-                            /100
-                          </span>
-                        </div>
-                        <button
-                          className="expand-row-btn ml-2 text-[#94a3b8] hover:text-[#2563eb]"
-                          onClick={(e) => {
-                            const row =
-                              e.currentTarget.closest(".shortlist-row");
-                            const next = row?.nextElementSibling;
-                            if (next?.classList.contains("expanded-content")) {
-                              next.classList.toggle("hidden");
-                            }
-                          }}
-                        >
-                          <FontAwesomeIcon icon={faChevronDown} />
-                        </button>
-                      </div>
-                    </div>
-                    {/* Expanded Content */}
-                    <div className="expanded-content hidden bg-[#fafbff] px-5 py-4 border-t border-[#e2e8f0] text-sm">
-                      <div className="grid grid-cols-5 gap-4 mb-4">
-                        {[
-                          "Technical",
-                          "Experience",
-                          "Education",
-                          "Profile",
-                          "Red Flags",
-                        ].map((dimName, i) => {
-                          const dimKey = [
-                            "tech",
-                            "exp",
-                            "edu",
-                            "prof",
-                            "flags",
-                          ][i] as keyof typeof cand.dimensionScores;
-                          const score = cand.dimensionScores[dimKey];
-                          return (
-                            <div key={dimName}>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-xl">
-                                  {score}
-                                </span>
-                                <span className="text-xs text-[#64748b]">
-                                  {dimName}
-                                </span>
-                              </div>
-                              <p className="text-xs text-[#475569] mt-1">
-                                <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">
-                                  ✦ AI
-                                </span>
-                                {cand.rationales[i]}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="font-bold text-green-700 text-xs mb-1">
-                            Strengths
-                          </div>
-                          {cand.strengths.map((s, i) => (
-                            <div
-                              key={i}
-                              className="text-xs flex gap-2 items-start"
-                            >
-                              <FontAwesomeIcon
-                                icon={faCheckCircle}
-                                className="text-green-600 text-xs mt-0.5"
+                            −
+                          </button>
+                          <div className="flex gap-[3px] mx-1">
+                            {Array.from({ length: 10 }).map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-7 h-7 rounded-md ${i < segments ? "bg-primary" : "bg-[#f1f5f9]"}`}
                               />
-                              <span>{s}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div>
-                          <div className="font-bold text-red-600 text-xs mb-1">
-                            Gaps/Risks
+                            ))}
                           </div>
-                          {cand.gaps.map((g, i) => (
-                            <div
-                              key={i}
-                              className="text-xs flex gap-2 items-start"
-                            >
-                              <FontAwesomeIcon
-                                icon={faExclamationCircle}
-                                className="text-red-500 text-xs mt-0.5"
-                              />
-                              <span>{g}</span>
-                            </div>
-                          ))}
+                          <button
+                            onClick={() => updateDimensionPoints(idx, 10)}
+                            disabled={plusDisabled}
+                            className="w-8 h-8 rounded-full border border-[#e2e8f0] flex items-center justify-center text-lg hover:border-primary hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            +
+                          </button>
+                          <span className="font-bold text-[15px] text-[#0f172a] min-w-[50px] text-right">
+                            {dim.points} pts
+                          </span>
                         </div>
                       </div>
-                      <div className="mt-3 bg-white p-3 rounded-xl border flex items-start gap-2">
-                        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
-                          ✦ AI
-                        </span>
-                        <span className="text-sm">{cand.aiRec}</span>
-                      </div>
-                      <button
-                        onClick={() => setDetailPanelCandidate(cand)}
-                        className="mt-3 text-primary font-medium text-sm flex items-center gap-1"
-                      >
-                        <FontAwesomeIcon icon={faArrowRight} /> Open full detail
-                        panel →
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
+                    );
+                  })}
+                </div>
 
-      {/* Candidate Detail Panel */}
-      {detailPanelCandidate && (
-        <CandidateDetailPanel
-          isOpen={!!detailPanelCandidate}
-          onClose={() => setDetailPanelCandidate(null)}
-          candidate={detailPanelCandidate}
-          jobId={job?._id || ""}
-          sessionId={sessionId}
-        />
-      )}
-
-      {/* Compare Modal */}
-      {compareModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center"
-          onClick={() => setCompareModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-2xl w-[95%] max-w-6xl max-h-[90vh] overflow-auto p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-xl">Compare Candidates</h3>
-              <button
-                onClick={() => setCompareModalOpen(false)}
-                className="text-[#94a3b8] hover:text-black"
-              >
-                <FontAwesomeIcon icon={faTimes} className="text-xl" />
-              </button>
-            </div>
-            <CompareContent candidates={compareCandidates} />
-          </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 bg-[#1e293b] text-white px-5 py-2.5 rounded-full text-sm font-medium shadow-lg z-[100]">
-          {toastMessage}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Compare Modal Content
-function CompareContent({ candidates }: { candidates: CandidateDisplay[] }) {
-  const dims = ["Technical", "Experience", "Education", "Profile", "Red Flags"];
-  const keys = ["tech", "exp", "edu", "prof", "flags"] as const;
-
-  return (
-    <>
-      <div
-        className={`grid gap-4`}
-        style={{ gridTemplateColumns: `repeat(${candidates.length + 1}, 1fr)` }}
-      >
-        <div className="font-bold"></div>
-        {candidates.map((c) => (
-          <div key={c.id} className="font-bold text-lg">
-            {c.name}
-            <br />
-            <span className="text-sm font-normal">{c.composite}/100</span>
-          </div>
-        ))}
-        {keys.map((key, idx) => {
-          const scores = candidates.map((c) => c.dimensionScores[key]);
-          const maxScore = Math.max(...scores);
-          return (
-            <>
-              <div key={`dim-${idx}`} className="font-medium py-2">
-                {dims[idx]}
-              </div>
-              {candidates.map((c) => {
-                const isWinner = c.dimensionScores[key] === maxScore;
-                return (
-                  <div
-                    key={`${c.id}-${idx}`}
-                    className={`py-2 ${isWinner ? "bg-[#f0fdf4]" : ""} px-2 rounded`}
-                  >
-                    {c.dimensionScores[key]}
-                    <span className="text-xs text-[#64748b] block">
-                      {c.rationales[idx]}
+                {/* Dealbreakers */}
+                <div className="mt-5 bg-white rounded-2xl border border-[#e2e8f0] p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base font-extrabold text-[#0f172a]">
+                      Dealbreakers
+                    </h3>
+                    <span className="bg-[#f5f3ff] text-[#7c3aed] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#e9d5ff]">
+                      <FontAwesomeIcon
+                        icon={faWandMagicSparkles}
+                        className="text-[8px] mr-1"
+                      />
+                      AI
                     </span>
                   </div>
-                );
-              })}
-            </>
-          );
-        })}
+                  <p className="text-xs text-[#475569] mb-3">
+                    Requirements that automatically disqualify a candidate.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {dealbreakers.map((item, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center bg-[#fee2e2] text-[#b91c1c] border border-[#fecaca] text-xs font-semibold px-3 py-1.5 rounded-full"
+                      >
+                        {item}
+                        <FontAwesomeIcon
+                          icon={faTimes}
+                          className="ml-2 cursor-pointer hover:text-red-700"
+                          onClick={() => removeDealbreaker(i)}
+                        />
+                      </span>
+                    ))}
+                  </div>
+
+                  {showDealbreakerInput ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newDealbreaker}
+                        onChange={(e) => setNewDealbreaker(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addDealbreaker()}
+                        placeholder="e.g. 5+ years experience"
+                        className="flex-1 border border-[#e2e8f0] rounded-full px-4 py-1.5 text-xs focus:ring-1 focus:ring-primary/20 outline-none"
+                        autoFocus
+                      />
+                      <button
+                        onClick={addDealbreaker}
+                        className="bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
+                      >
+                        <FontAwesomeIcon icon={faCheck} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowDealbreakerInput(true)}
+                      className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="text-[10px]" />{" "}
+                      Add dealbreaker
+                    </button>
+                  )}
+                </div>
+
+                {/* Nice to Have */}
+                <div className="mt-4 bg-white rounded-2xl border border-[#e2e8f0] p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-base font-extrabold text-[#0f172a]">
+                      Nice to Have
+                    </h3>
+                    <span className="bg-[#f5f3ff] text-[#7c3aed] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#e9d5ff]">
+                      <FontAwesomeIcon
+                        icon={faWandMagicSparkles}
+                        className="text-[8px] mr-1"
+                      />
+                      AI
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#475569] mb-3">
+                    Skills that strengthen a candidate's profile.
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {niceToHaves.map((item, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center bg-[#eff6ff] text-[#1d4ed8] border border-[#bfdbfe] text-xs font-semibold px-3 py-1.5 rounded-full"
+                      >
+                        {item}
+                        <FontAwesomeIcon
+                          icon={faTimes}
+                          className="ml-2 cursor-pointer hover:text-blue-800"
+                          onClick={() => removeNiceToHave(i)}
+                        />
+                      </span>
+                    ))}
+                  </div>
+
+                  {showNiceToHaveInput ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newNiceToHave}
+                        onChange={(e) => setNewNiceToHave(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addNiceToHave()}
+                        placeholder="e.g. GraphQL experience"
+                        className="flex-1 border border-[#e2e8f0] rounded-full px-4 py-1.5 text-xs focus:ring-1 focus:ring-primary/20 outline-none"
+                        autoFocus
+                      />
+                      <button
+                        onClick={addNiceToHave}
+                        className="bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center text-xs"
+                      >
+                        <FontAwesomeIcon icon={faCheck} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowNiceToHaveInput(true)}
+                      className="text-xs font-semibold text-primary flex items-center gap-1 hover:underline"
+                    >
+                      <FontAwesomeIcon icon={faPlus} className="text-[10px]" />{" "}
+                      Add nice to have
+                    </button>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-between items-center mt-5 pt-2">
+                  <button
+                    onClick={() => setCurrentStep(1)}
+                    className="text-sm font-semibold text-[#475569] hover:text-primary"
+                  >
+                    <FontAwesomeIcon icon={faArrowLeft} className="mr-1.5" />{" "}
+                    Back to Job Brief
+                  </button>
+                  <button
+                    onClick={handleConfirmRubric}
+                    disabled={!isBalanced || isLoading || isGeneratingRubric}
+                    className="bg-primary text-white font-bold py-2.5 px-6 rounded-full text-sm shadow-sm hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <FontAwesomeIcon
+                          icon={faSpinner}
+                          spin
+                          className="mr-1.5"
+                        />{" "}
+                        Saving...
+                      </>
+                    ) : isGeneratingRubric ? (
+                      <>
+                        <FontAwesomeIcon
+                          icon={faSpinner}
+                          spin
+                          className="mr-1.5"
+                        />{" "}
+                        Generating AI Rubric...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faLock} className="mr-1.5" />{" "}
+                        Confirm Rubric & Start Session
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="mt-6 p-4 bg-[#f8fafc] rounded-xl">
-        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full mb-2">
-          ✦ AI
-        </span>
-        <p className="text-sm">
-          Head-to-head: {candidates.map((c) => c.name).join(" vs ")}.{" "}
-          {candidates[0].name} leads in technical depth, while{" "}
-          {candidates.length > 1 ? candidates[1].name : ""} shows broader
-          experience. Overall, {candidates[0].name} is the stronger match.
-        </p>
-      </div>
-      <div className="mt-4 p-4 border border-green-200 bg-green-50/30 rounded-xl">
-        <span className="inline-flex items-center bg-[#f5f3ff] text-[#7c3aed] border border-[#e9d5ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
-          ✦ AI
-        </span>
-        <span className="font-bold"> Recommendation:</span> Prioritize{" "}
-        {candidates[0].name}. {candidates[0].aiRec}
-      </div>
-      <button className="mt-4 bg-primary text-white py-2 px-5 rounded-full text-sm">
-        <FontAwesomeIcon icon={faFileExport} className="mr-1" /> Add to session
-        notes
-      </button>
-    </>
+    </div>
   );
 }
